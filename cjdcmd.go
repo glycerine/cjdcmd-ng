@@ -102,7 +102,7 @@ type Route struct {
 }
 
 type Data struct {
-	User            *admin.Admin
+	User            *cjdns.Admin
 	LoggingStreamID string
 }
 

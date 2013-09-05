@@ -26,7 +26,7 @@ type Ping struct {
 }
 
 // Pings a node and generates statistics
-func pingNode(user *admin.Admin, ping *Ping) (err error) {
+func pingNode(user *cjdns.Admin, ping *Ping) (err error) {
 	response, err := admin.RouterModule_pingNode(user, ping.Target, PingTimeout)
 
 	if err != nil {

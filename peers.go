@@ -61,7 +61,7 @@ func isOneHop(destination uint64, midPath uint64) bool {
  * @param target the node to get peers for, if it is the switch label 0000.0000.0000.0001
  *               then this node's peers will be gotten.
  */
-func doPeers(user *admin.Admin, target Target) {
+func doPeers(user *cjdns.Admin, target Target) {
 	table := getTable(user)
 	usingPath := false
 	var tText string

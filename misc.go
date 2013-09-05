@@ -123,7 +123,7 @@ func readConfig() (conf *config.Config, err error) {
 }
 
 // Attempt to connect to cjdns
-func adminConnect() (user *admin.Admin, err error) {
+func adminConnect() (user *cjdns.Admin, err error) {
 	// If nothing else has already set this
 	if AdminBind == "" || AdminPassword == "" {
 		// If we still have no idea which configuration file to use
@@ -210,7 +210,7 @@ func padIPv6(ip net.IP) string {
 }
 
 // Dumps the entire routing table and structures it
-func getTable(user *admin.Admin) (table []*Route) {
+func getTable(user *cjdns.Admin) (table []*Route) {
 	page := 0
 	var more int64
 	table = make([]*Route, 0)

@@ -35,7 +35,7 @@ type ByQuality struct{ Routes }
 func (s ByQuality) Less(i, j int) bool { return s.Routes[i].RawLink > s.Routes[j].RawLink }
 
 // TODO(inhies): Make the output nicely formatted
-func doTraceroute(user *admin.Admin, target Target) {
+func doTraceroute(user *cjdns.Admin, target Target) {
 	table := getTable(user)
 	usingPath := false
 	var tText string
