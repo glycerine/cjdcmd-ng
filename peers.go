@@ -15,7 +15,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/inhies/go-cjdns/admin"
+	"github.com/inhies/go-cjdns/cjdns"
 )
 
 // Log base 2 of a uint64
