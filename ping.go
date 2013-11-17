@@ -1,95 +1,109 @@
-/*
- * You may redistribute this program and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation,
- * either version 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package main
 
 import (
 	"fmt"
-	"github.com/inhies/go-cjdns/cjdns"
+	"github.com/3M3RY/go-cjdns/cjdns"
+	"github.com/spf13/cobra"
 	"math"
+	"os"
+	"os/signal"
+	"sync"
+	"time"
 )
 
-type Ping struct {
-	Target, Domain, Version, Response, Error     string
-	Failed, Percent, Sent, Success               float64
-	CTime, TTime, TTime2, TMin, TAvg, TMax, TDev float64
+const minInterval = time.Millisecond * 200
+
+var PingCmd = &cobra.Command{
+	Use:   "ping HOST",
+	Short: "pings a host",
+	Long:  `Sends a CJDNS level ping to a given host.`,
+	Run:   ping,
 }
 
-// Pings a node and generates statistics
-func pingNode(user *cjdns.Admin, ping *Ping) (err error) {
-	response, err := admin.RouterModule_pingNode(user, ping.Target, PingTimeout)
+func ping(cmd *cobra.Command, args []string) {
+	if len(args) != 1 {
+		fmt.Fprintln(os.Stderr, "a single host must be specified")
+		os.Exit(1)
+	}
+	
+	var count int
+	var interval time.Duration
+	//if interval.Nanoseconds() < minInterval {
+	//	fmt.Println("reducing interval")
+	interval = minInterval
+	//}
 
+	host := args[0]
+	addr, err := cjdns.Resolve(host)
 	if err != nil {
-		return
+		fmt.Fprintln(os.Stderr, "Could not resolve "+host+": "+err.Error())
+		os.Exit(1)
 	}
 
-	ping.Sent++
-	if response.Error == "" {
-		if response.Result == "timeout" {
-			ping.Response = fmt.Sprintf("Timeout from %v after %vms", ping.Target, response.Time)
-			ping.Error = "timeout"
-			ping.Failed++
-		} else {
-			ping.Success++
-			ping.Response = fmt.Sprintf("Reply from %v req=%v time=%v ms", ping.Target, ping.Success+ping.Failed, response.Time)
+	var version string
+	var ms, minT, avgT, maxT, transmitted, received float32
+	minT = math.MaxFloat32
 
-			ping.CTime = float64(response.Time)
-			ping.TTime += ping.CTime
-			ping.TTime2 += ping.CTime * ping.CTime
-			if ping.TMin == 0 {
-				ping.TMin = ping.CTime
-			}
-			if ping.CTime > ping.TMax {
-				ping.TMax = ping.CTime
-			}
-			if ping.CTime < ping.TMin {
-				ping.TMin = ping.CTime
-			}
-
-			if ping.Version == "" {
-				ping.Version = response.Version
-			}
-			if ping.Version != response.Version {
-				//not likely we'll see this happen but it doesnt hurt to be prepared
-				fmt.Println("Host is sending back mismatched versions")
-				fmt.Println("Old:", ping.Version, "New:", response.Version)
-			}
+	var start time.Time
+	printSummary := func() {
+		duration := time.Since(start)
+		var loss float32
+		switch {
+		case received == 0:
+			loss = 100
+		case received == transmitted:
+			loss = 0
+		default:
+			loss = (received / transmitted) * 100.0
 		}
-	} else {
-		ping.Failed++
-		ping.Error = response.Error
-		ping.Response = response.Error
-		return
-	}
-	return
-}
 
-func outputPing(Ping *Ping) {
+		fmt.Fprint(os.Stdout, "\n--- "+host+" ---\n")
+		fmt.Fprintf(os.Stdout, "%.0f pings transmitted, %.0f received, %2.0f%% ping loss, time %s\n", transmitted, received, loss, duration)
+		if received != 0 {
+			avgT /= received
+			fmt.Fprintf(os.Stdout, "rtt min/avg/max = %2.f/%.2f/%.2f ms\n", minT, avgT, maxT)
+			fmt.Fprintln(os.Stdout, "CJDNS version: "+version)
 
-	if Ping.Success > 0 {
-		Ping.TAvg = Ping.TTime / Ping.Success
+		}
+		os.Exit(0)
 	}
-	Ping.TTime2 /= Ping.Success
 
-	if Ping.Success > 0 {
-		Ping.TDev = math.Sqrt(Ping.TTime2 - Ping.TAvg*Ping.TAvg)
-	}
-	Ping.Percent = (Ping.Failed / Ping.Sent) * 100
+	mu := new(sync.Mutex)
+	ping := func() {
+		version, ms, err = admin.RouterModule_pingNode(addr, 0)
+		mu.Lock()
+		transmitted++
 
-	fmt.Println("\n---", Ping.Target, "ping statistics ---")
-	fmt.Printf("%v packets transmitted, %v received, %.2f%% packet loss, time %vms\n", Ping.Sent, Ping.Success, Ping.Percent, Ping.TTime)
-	fmt.Printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n", Ping.TMin, Ping.TAvg, Ping.TMax, Ping.TDev)
-	if Ping.Version != "" {
-		fmt.Printf("Target is using cjdns version %v\n", Ping.Version)
+		if err != nil {
+			fmt.Fprintf(os.Stdout, "error: %s\n", err)
+		} else {
+			received++
+			fmt.Fprintf(os.Stdout, "time=%.3f ms\n", ms)
+			switch {
+			case ms < minT:
+				minT = ms
+			case ms > maxT:
+				maxT = ms
+			}
+			avgT += ms
+		}
+		mu.Unlock()
 	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill)
+
+	fmt.Fprintf(os.Stdout, "PING %s (%s)\n", host, addr)
+	start = time.Now()
+	go ping()
+	for i := count - 1; i != 0; i-- {
+		select {
+		case <-c:
+			printSummary()
+
+		case <-time.After(interval):
+			go ping()
+		}
+	}
+	printSummary()
 }
