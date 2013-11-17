@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"github.com/3M3RY/go-cjdns/cjdns"
@@ -9,22 +10,23 @@ import (
 	"time"
 )
 
-var TraceRoutesCmd = &cobra.Command{
-	Use:   "traceroutes HOST [HOST...]",
+var TraceCmd = &cobra.Command{
+	Use:   "trace HOST [HOST...]",
 	Short: "prints routes to hosts",
 	Long:  `Parses the local routing table and prints the routes to the given hosts.`,
-	Run:   traceRoutes,
+	Run:   trace,
 }
 
-func traceRoutes(cmd *cobra.Command, args []string) {
+func trace(cmd *cobra.Command, args []string) {
 	if len(args) == 0 {
 		cmd.Usage()
 		os.Exit(1)
 	}
-	/*
-		startTime := time.Now()
+	var run *NmapRun
+	startTime := time.Now()
+	if NmapOutput {
 		args := fmt.Sprint(os.Args[:])
-		run := &NmapRun{
+		run = &NmapRun{
 			Scanner:          "cjdmap",
 			Args:             args,
 			Start:            startTime.Unix(),
@@ -33,7 +35,7 @@ func traceRoutes(cmd *cobra.Command, args []string) {
 			XMLOutputVersion: "1.04",
 			Hosts:            make([]*Host, 0, len(args)),
 		}
-	*/
+	}
 
 	targets := make([]*target, 0, len(args))
 	for _, arg := range args {
@@ -52,25 +54,28 @@ func traceRoutes(cmd *cobra.Command, args []string) {
 	table.SortByPath()
 
 	for _, target := range targets {
-		fmt.Fprintln(os.Stdout, target)
-		_, err := target.traceRoutes(table)
+		if NmapOutput {
+			fmt.Fprintln(os.Stderr, target)
+		} else {
+			fmt.Fprintln(os.Stdout, target)
+		}
+		traces, err := target.trace(table)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Faild to trace %s: %s\n", target, err)
 			continue
 		}
-
-		//run.Hosts = append(run.Hosts, trace)
+		if NmapOutput {
+			run.Hosts = append(run.Hosts, traces[0])
+		}
 	}
-
-	/*
+	if NmapOutput {
 		stopTime := time.Now()
 		run.Finished = &Finished{
 			Time:    stopTime.Unix(),
 			TimeStr: stopTime.String(),
-			//Elapsed: (stopTime.Sub(startTime)*time.Millisecond).String(),
+			//Elapsed: (stopTime.Sub(startTime) * time.Millisecond).String(),
 			Exit: "success",
 		}
-
 
 		fmt.Fprint(os.Stdout, xml.Header)
 		fmt.Fprintln(os.Stdout, `<?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>`)
@@ -80,7 +85,7 @@ func traceRoutes(cmd *cobra.Command, args []string) {
 			fmt.Fprintln(os.Stderr, "Error:", err)
 			os.Exit(1)
 		}
-	*/
+	}
 }
 
 type target struct {
@@ -113,7 +118,7 @@ func newTarget(host string) (t *target, err error) {
 
 var notInTableError = errors.New("not found in routing table")
 
-func (t *target) traceRoutes(table cjdns.Routes) (hostTraces []*Host, err error) {
+func (t *target) trace(table cjdns.Routes) (hostTraces []*Host, err error) {
 	hostTraces = make([]*Host, 0, 2)
 	for _, r := range table {
 		if r.IP == t.addr {
@@ -125,6 +130,10 @@ func (t *target) traceRoutes(table cjdns.Routes) (hostTraces []*Host, err error)
 			}
 			fmt.Fprintln(os.Stderr)
 		}
+	}
+	if len(hostTraces) == 0 {
+		hostTraces = nil
+		err = notInTableError
 	}
 	return
 }
@@ -156,7 +165,11 @@ func (t *target) traceHops(hops cjdns.Routes) (*Host, error) {
 		if ResolveNodeinfo {
 			hop.Host = NodeinfoReverse(p.IP)
 		}
-		fmt.Fprintf(os.Stdout, "  %02d.% 4dms %s %s %s\n", y, rtt, p.Path, p.IP, hop.Host)
+		if NmapOutput {
+			fmt.Fprintf(os.Stderr, "  %02d.% 4dms %s %s %s\n", y, rtt, p.Path, p.IP, hop.Host)
+		} else {
+			fmt.Fprintf(os.Stdout, "  %02d.% 4dms %s %s %s\n", y, rtt, p.Path, p.IP, hop.Host)
+		}
 		trace.Hops = append(trace.Hops, hop)
 	}
 

@@ -12,6 +12,7 @@ import (
 var (
 	Verbose         bool
 	ResolveNodeinfo bool
+	NmapOutput      bool
 	Admin           *cjdns.Admin
 )
 
@@ -20,13 +21,15 @@ var rootCmd = &cobra.Command{Use: os.Args[0]}
 func main() {
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
 	rootCmd.PersistentFlags().BoolVarP(&ResolveNodeinfo, "nodeinfo", "N", false, "resolve hostnames with nodeinfo")
+	TraceCmd.Flags().BoolVarP(&NmapOutput, "nmap", "x", false, "format output as nmap XML")
 
+	rootCmd.AddCommand(AddPassCmd)
 	rootCmd.AddCommand(GetNodeinfoCmd)
 	rootCmd.AddCommand(SetNodeinfoCmd)
 	rootCmd.AddCommand(NickCmd)
 	rootCmd.AddCommand(PeersCmd)
 	rootCmd.AddCommand(PingCmd)
-	rootCmd.AddCommand(TraceRoutesCmd)
+	rootCmd.AddCommand(TraceCmd)
 
 	var err error
 	if Admin, err = cjdns.NewAdmin(nil); err != nil {
