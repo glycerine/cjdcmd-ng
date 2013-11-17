@@ -22,10 +22,11 @@ var PingCmd = &cobra.Command{
 
 func ping(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		fmt.Fprintln(os.Stderr, "a single host must be specified")
+		cmd.Usage()
 		os.Exit(1)
 	}
-	
+
+	//TODO(emery): count and interval should be set
 	var count int
 	var interval time.Duration
 	//if interval.Nanoseconds() < minInterval {
@@ -33,11 +34,20 @@ func ping(cmd *cobra.Command, args []string) {
 	interval = minInterval
 	//}
 
-	host := args[0]
-	addr, err := cjdns.Resolve(host)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Could not resolve "+host+": "+err.Error())
-		os.Exit(1)
+	var err error
+	var addr, host string
+
+	if cjdns.IsAddress(args[0]) {
+		addr = args[0]
+		if ResolveNodeinfo {
+			host = NodeinfoReverse(addr)
+		}
+	} else {
+		host = args[0]
+		if addr, err = cjdns.Resolve(host); err != nil {
+			fmt.Fprintln(os.Stderr, "Could not resolve "+host+": "+err.Error())
+			os.Exit(1)
+		}
 	}
 
 	var version string
@@ -70,7 +80,7 @@ func ping(cmd *cobra.Command, args []string) {
 
 	mu := new(sync.Mutex)
 	ping := func() {
-		version, ms, err = admin.RouterModule_pingNode(addr, 0)
+		version, ms, err = Admin.RouterModule_pingNode(addr, 0)
 		mu.Lock()
 		transmitted++
 
