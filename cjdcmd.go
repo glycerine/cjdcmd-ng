@@ -5,14 +5,17 @@ import (
 	"github.com/3M3RY/go-cjdns/cjdns"
 	"github.com/3M3RY/go-nodeinfo"
 	"github.com/spf13/cobra"
+	"net"
 	"os"
 	"sync"
 )
 
 var (
-	Verbose         bool
-	ResolveNodeinfo bool
+	ConfFile        string
 	NmapOutput      bool
+	ResolveNodeinfo bool
+	ResolveSystem   bool
+	Verbose         bool
 	Admin           *cjdns.Admin
 )
 
@@ -21,9 +24,11 @@ var rootCmd = &cobra.Command{Use: os.Args[0]}
 func main() {
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
 	rootCmd.PersistentFlags().BoolVarP(&ResolveNodeinfo, "nodeinfo", "N", false, "resolve hostnames with nodeinfo")
+	rootCmd.PersistentFlags().BoolVarP(&ResolveSystem, "system-resolver", "S", true, "resolve hostnames with system resolver")
 	TraceCmd.Flags().BoolVarP(&NmapOutput, "nmap", "x", false, "format output as nmap XML")
+	//AddPassCmd.Flags().StringVarP(&ConfFile, "conf", "c", "", "path to cjdroute.conf")
 
-	rootCmd.AddCommand(AddPassCmd)
+	//rootCmd.AddCommand(AddPassCmd)
 	rootCmd.AddCommand(GetNodeinfoCmd)
 	rootCmd.AddCommand(SetNodeinfoCmd)
 	rootCmd.AddCommand(NickCmd)
@@ -42,33 +47,45 @@ func main() {
 
 var (
 	// BUG(emery): oft useless instantiation
-	nodeinfoCache = make(map[string]string)
-	nodeinfoMutex = new(sync.RWMutex)
+	rCache = make(map[string]string)
+	rMutex = new(sync.RWMutex)
 )
 
-// TODO actually make this a general reverse lookup fuction
-// that can scrap IRC in addition to nodeinfo
-// convience fuction for caching nodeinfo hostnames
-func NodeinfoReverse(addr string) (hostname string) {
-	nodeinfoMutex.RLock()
-	var ok bool
-	hostname, ok = nodeinfoCache[addr]
-	nodeinfoMutex.RUnlock()
+func Resolve(addr string) string {
+	rMutex.RLock()
+	s, ok := rCache[addr]
+	rMutex.RUnlock()
 	if ok {
-		return
+		return s
 	}
-	nodeinfoMutex.Lock()
-	defer nodeinfoMutex.Unlock()
-	hostname, ok = nodeinfoCache[addr]
+	rMutex.Lock()
+	defer rMutex.Unlock()
+	s, ok = rCache[addr]
 	if ok {
-		return
+		return s
 	}
 
-	if hosts, err := nodeinfo.LookupAddr(addr); err == nil {
-		hostname = hosts[0]
-		nodeinfoCache[addr] = hostname
-	} else if Verbose {
-		fmt.Fprintf(os.Stderr, "failed to resolve %s, %s\n", addr, err)
+	if ResolveNodeinfo {
+		if hostnames, err := nodeinfo.LookupAddr(addr); err == nil {
+			for _, h := range hostnames {
+				s = s + h + " "
+			}
+		} else if Verbose {
+			fmt.Fprintf(os.Stderr, "failed to resolve %s, %s\n", addr, err)
+		}
 	}
-	return
+
+	if ResolveSystem {
+		if hostnames, err := net.LookupAddr(addr); err == nil {
+			for _, h := range hostnames {
+				s = s + h + " "
+			}
+		} else if Verbose {
+			fmt.Fprintf(os.Stderr, "failed to resolve %s, %s\n", addr, err)
+		}
+	}
+	if len(s) > 0 {
+		rCache[addr] = s
+	}
+	return s
 }

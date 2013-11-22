@@ -39,9 +39,7 @@ func ping(cmd *cobra.Command, args []string) {
 
 	if cjdns.IsAddress(args[0]) {
 		addr = args[0]
-		if ResolveNodeinfo {
-			host = NodeinfoReverse(addr)
-		}
+		host = Resolve(addr)
 	} else {
 		host = args[0]
 		if addr, err = cjdns.Resolve(host); err != nil {

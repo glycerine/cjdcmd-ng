@@ -37,14 +37,7 @@ func peers(cmd *cobra.Command, args []string) {
 		fmt.Println("no peers found in local routing table\n")
 		os.Exit(1)
 	}
-	if ResolveNodeinfo {
-		for _, p := range peers {
-			host := NodeinfoReverse(p.IP)
-			fmt.Println("\t ", p.IP, host)
-		}
-	} else {
-		for _, p := range peers {
-			fmt.Println("\t ", p.IP)
-		}
+	for _, p := range peers {
+		fmt.Println("\t ", p.IP, Resolve(p.IP))
 	}
 }

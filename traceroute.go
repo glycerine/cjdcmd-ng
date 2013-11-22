@@ -106,9 +106,7 @@ func newTarget(host string) (t *target, err error) {
 	t = new(target)
 	if cjdns.IsAddress(host) {
 		t.addr = host
-		if ResolveNodeinfo {
-			t.name = NodeinfoReverse(host)
-		}
+		t.name = Resolve(host)
 	} else {
 		t.name = host
 		t.addr, err = cjdns.Resolve(host)
@@ -161,10 +159,9 @@ func (t *target) traceHops(hops cjdns.Routes) (*Host, error) {
 			TTL:    y,
 			RTT:    rtt,
 			IPAddr: p.IP,
+			Host:   Resolve(p.IP),
 		}
-		if ResolveNodeinfo {
-			hop.Host = NodeinfoReverse(p.IP)
-		}
+
 		if NmapOutput {
 			fmt.Fprintf(os.Stderr, "  %02d.% 4dms %s %s %s\n", y, rtt, p.Path, p.IP, hop.Host)
 		} else {
