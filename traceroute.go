@@ -4,8 +4,9 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/3M3RY/go-cjdns/cjdns"
+	"github.com/3M3RY/go-cjdns/admin"
 	"github.com/spf13/cobra"
+	"net"
 	"os"
 	"time"
 )
@@ -89,7 +90,7 @@ func trace(cmd *cobra.Command, args []string) {
 }
 
 type target struct {
-	addr string
+	addr net.IP
 	name string
 	rtt  time.Duration
 	xml  *Host
@@ -97,36 +98,29 @@ type target struct {
 
 func (t *target) String() string {
 	if len(t.name) != 0 {
-		return t.name + " (" + t.addr + ")"
+		return fmt.Sprintf("%s (%s)", t.name, t.addr)
 	}
-	return t.addr
+	return t.addr.String()
 }
 
 func newTarget(host string) (t *target, err error) {
 	t = new(target)
-	if cjdns.IsAddress(host) {
-		t.addr = host
-		t.name = Resolve(host)
-	} else {
-		t.name = host
-		t.addr, err = cjdns.Resolve(host)
-	}
+	t.name, t.addr, err = resolve(host)
 	return
 }
 
 var notInTableError = errors.New("not found in routing table")
 
-func (t *target) trace(table cjdns.Routes) (hostTraces []*Host, err error) {
-	hostTraces = make([]*Host, 0, 2)
+func (t *target) trace(table admin.Routes) (hostTraces []*Host, err error) {
 	for _, r := range table {
-		if r.IP == t.addr {
-			hops := table.Hops(r)
+		if t.addr.Equal(*r.IP) {
+			hops := table.Hops(*r.Path)
 			if hostTrace, err := t.traceHops(hops); err != nil {
-				fmt.Fprintf(os.Stderr, "failed to trace %s, %s\n", t, err)
+				fmt.Fprintf(os.Stderr, "failed to trace %s, %s\n", r, err)
 			} else {
 				hostTraces = append(hostTraces, hostTrace)
+				fmt.Fprintln(os.Stdout)
 			}
-			fmt.Fprintln(os.Stderr)
 		}
 	}
 	if len(hostTraces) == 0 {
@@ -136,17 +130,17 @@ func (t *target) trace(table cjdns.Routes) (hostTraces []*Host, err error) {
 	return
 }
 
-func (t *target) traceHops(hops cjdns.Routes) (*Host, error) {
+func (t *target) traceHops(hops admin.Routes) (*Host, error) {
 	hops.SortByPath()
 	startTime := time.Now().Unix()
 	trace := &Trace{Proto: "CJDNS"}
+
 	for y, p := range hops {
 		if y == 0 {
 			continue
 		}
-
 		// Ping by path so we don't get RTT for a different route.
-		_, rtt, err := Admin.SwitchPinger_ping(p.Path, "", 0)
+		rtt, _, err := Admin.RouterModule_pingNode(p.Path.String(), 0)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return nil, err
@@ -154,12 +148,13 @@ func (t *target) traceHops(hops cjdns.Routes) (*Host, error) {
 		if rtt == 0 {
 			rtt = 1
 		}
+		hostname, _, _ := resolve(p.IP.String())
 
 		hop := &Hop{
 			TTL:    y,
 			RTT:    rtt,
 			IPAddr: p.IP,
-			Host:   Resolve(p.IP),
+			Host:   hostname,
 		}
 
 		if NmapOutput {
@@ -179,7 +174,7 @@ func (t *target) traceHops(hops cjdns.Routes) (*Host, error) {
 			Reason:    "pingNode",
 			ReasonTTL: 56,
 		},
-		Address: newAddress(t.addr),
+		Address: &Address{Addr: &t.addr, AddrType: "ipv6"},
 		Trace:   trace,
 		//Times: &Times{ // Don't know what to do with this element yet.
 		//	SRTT:   1,

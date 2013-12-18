@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/3M3RY/go-cjdns/cjdns"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -19,7 +18,7 @@ func peers(cmd *cobra.Command, args []string) {
 		cmd.Usage()
 		os.Exit(1)
 	}
-	addr, err := cjdns.Resolve(args[0])
+	_, ip, err := resolve(args[0])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Could not resolve "+args[0]+".")
 		os.Exit(1)
@@ -31,13 +30,14 @@ func peers(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	peers := table.Peers(addr)
+	peers := table.Peers(ip)
 
 	if len(peers) == 0 {
 		fmt.Println("no peers found in local routing table\n")
 		os.Exit(1)
 	}
 	for _, p := range peers {
-		fmt.Println("\t ", p.IP, Resolve(p.IP))
+		host, _, _ := resolve(p.IP.String())
+		fmt.Println("\t ", p.IP, host)
 	}
 }

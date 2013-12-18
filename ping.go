@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/3M3RY/go-cjdns/cjdns"
 	"github.com/spf13/cobra"
 	"math"
 	"os"
@@ -13,11 +12,21 @@ import (
 
 const minInterval = time.Millisecond * 200
 
-var PingCmd = &cobra.Command{
-	Use:   "ping HOST",
-	Short: "pings a host",
-	Long:  `Sends a CJDNS level ping to a given host.`,
-	Run:   ping,
+var (
+	PingCmd = &cobra.Command{
+		Use:   "ping HOST",
+		Short: "pings a host",
+		Long:  `Sends a CJDNS level ping to a given host.`,
+		Run:   ping,
+	}
+
+	count    int
+	interval time.Duration
+)
+
+func init() {
+	PingCmd.PersistentFlags().IntVarP(&count, "count", "c", -1, "Stop after sending c packets.")
+	PingCmd.PersistentFlags().DurationVarP(&interval, "interval", "i", time.Second, " Wait time between sending each packet.")
 }
 
 func ping(cmd *cobra.Command, args []string) {
@@ -26,33 +35,26 @@ func ping(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	//TODO(emery): count and interval should be set
-	var count int
-	var interval time.Duration
-	//if interval.Nanoseconds() < minInterval {
-	//	fmt.Println("reducing interval")
-	interval = minInterval
-	//}
-
-	var err error
-	var addr, host string
-
-	if cjdns.IsAddress(args[0]) {
-		addr = args[0]
-		host = Resolve(addr)
-	} else {
-		host = args[0]
-		if addr, err = cjdns.Resolve(host); err != nil {
-			fmt.Fprintln(os.Stderr, "Could not resolve "+host+": "+err.Error())
-			os.Exit(1)
-		}
+	if interval < minInterval {
+		fmt.Println("increasing interval to", minInterval)
+		interval = minInterval
 	}
 
-	var version string
-	var ms, minT, avgT, maxT, transmitted, received float32
+	host, ip, err := resolve(args[0])
+	addr := ip.String()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Could not resolve %s: %s", args[0], err)
+		os.Exit(1)
+	}
+
+	var (
+		version                                     string
+		ms, minT, avgT, maxT, transmitted, received float32
+		msInt                                       int
+		start                                       time.Time
+	)
 	minT = math.MaxFloat32
 
-	var start time.Time
 	printSummary := func() {
 		duration := time.Since(start)
 		var loss float32
@@ -78,9 +80,10 @@ func ping(cmd *cobra.Command, args []string) {
 
 	mu := new(sync.Mutex)
 	ping := func() {
-		version, ms, err = Admin.RouterModule_pingNode(addr, 0)
 		mu.Lock()
+		msInt, version, err = Admin.RouterModule_pingNode(addr, 0)
 		transmitted++
+		ms = float32(msInt)
 
 		if err != nil {
 			fmt.Fprintf(os.Stdout, "error: %s\n", err)
@@ -98,15 +101,15 @@ func ping(cmd *cobra.Command, args []string) {
 		mu.Unlock()
 	}
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, os.Kill)
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt, os.Kill)
 
 	fmt.Fprintf(os.Stdout, "PING %s (%s)\n", host, addr)
 	start = time.Now()
 	go ping()
-	for i := count - 1; i != 0; i-- {
+	for i := count; i != 0; i-- {
 		select {
-		case <-c:
+		case <-sig:
 			printSummary()
 
 		case <-time.After(interval):

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
+	"net"
 )
 
 type HostState string
@@ -60,12 +61,10 @@ var UnknownHostStatus = &Status{State: HostStateUnknown}
 
 type Address struct {
 	XMLName  xml.Name `xml:"address"`
-	Addr     string   `xml:"addr,attr"`
+	Addr     *net.IP  `xml:"addr,attr"`
 	AddrType string   `xml:"addrtype,attr"`
 	Vendor   string   `xml:"vendor,attr,omitempty"`
 }
-
-func newAddress(arg string) *Address { return &Address{Addr: arg, AddrType: "ipv6"} }
 
 type Hostname struct {
 	Name string       `xml:"name,attr,omitempty"`
@@ -90,8 +89,8 @@ func (t *Trace) String() string {
 type Hop struct {
 	XMLName xml.Name `xml:"hop"`
 	TTL     int      `xml:"ttl,attr"`
-	RTT     int64    `xml:"rtt,attr,omitempty"`
-	IPAddr  string   `xml:"ipaddr,attr,omitempty"`
+	RTT     int      `xml:"rtt,attr,omitempty"`
+	IPAddr  *net.IP  `xml:"ipaddr,attr,omitempty"`
 	Host    string   `xml:"host,attr,omitempty"`
 }
 

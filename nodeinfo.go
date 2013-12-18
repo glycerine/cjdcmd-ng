@@ -2,14 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/3M3RY/go-cjdns/cjdns"
 	"github.com/3M3RY/go-nodeinfo"
 	"github.com/spf13/cobra"
 	"os"
 )
 
 var GetNodeinfoCmd = &cobra.Command{
-	Use:   "getnodeinfo ADDRESS/HOSTNAME",
+	Use:   "getnodeinfo [ADDRESS/HOSTNAME]",
 	Short: "resolves a host or address through NodeInfo",
 	Long:  `Performs a lookup or reverse lookup to the NodeInfo database.`,
 	Run:   getNodeinfo,
@@ -20,7 +19,39 @@ func getNodeinfo(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, "a single host must be specified")
 		os.Exit(1)
 	}
-	if cjdns.IsAddress(args[0]) {
+	/*
+		if len(args) == 0 {
+			faces, err := net.Interfaces()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "Failed to enumerate network interfaces, a host must be specified manually.")
+			}
+
+			for _, face := range faces {
+				fmt.Println(face.Name())
+				addrs, err := face.Addrs()
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "failed to get addresses for %s, %s", face.Name, err)
+				}
+				for _, addr := range addrs {
+					fmt.Println(addr)
+					a := addr.String()
+					if ipRegexp.MatchString(a) {
+						entries, err := nodeinfo.LookupHost(args[0])
+						if err != nil {
+							fmt.Fprintf(os.Stderr, "failed to query %s, %s", addr, err)
+						} else {
+							for _, entry := range entries {
+								fmt.Println(entry)
+							}
+						}
+					}
+				}
+			}
+			return
+		}
+	*/
+
+	if ipRegexp.MatchString(args[0]) {
 		hosts, err := nodeinfo.LookupAddr(args[0])
 		if err != nil {
 			fmt.Println(err)

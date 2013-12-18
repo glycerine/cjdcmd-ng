@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/3M3RY/go-cjdns/cjdns"
 	"github.com/spf13/cobra"
 	"math/rand"
 	"net"
@@ -45,11 +44,12 @@ func findNick(cmd *cobra.Command, args []string) {
 		cmd.Usage()
 		os.Exit(1)
 	}
-	addr, err := cjdns.Resolve(args[0])
+	_, ip, err := resolve(args[0])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Could not resolve "+args[0]+".")
 		os.Exit(1)
 	}
+	addr := ip.String()
 
 	rand.Seed(time.Now().UnixNano())
 
@@ -77,6 +77,11 @@ func findNick(cmd *cobra.Command, args []string) {
 	client.FindUsers(infoMap)
 
 	if info := infoMap[addr]; info != nil {
+		info.name = strings.TrimSuffix(info.name, "]")
+		info.server = strings.TrimSuffix(strings.TrimPrefix(info.server, "["), "]")
+		info.idle = strings.TrimSuffix(strings.TrimPrefix(info.idle, "["), "]")
+		info.channels = strings.TrimSuffix(strings.TrimPrefix(info.channels, "["), "]")
+
 		fmt.Println("\t nick:     ", info.nick)
 		fmt.Println("\t name:     ", info.name)
 		fmt.Println("\t server:   ", info.server)
@@ -202,8 +207,8 @@ func (c *ircClient) readWhois(infoMap map[string]*ircInfo) (end bool) {
 		switch rpl[0] {
 		case RPL_WHOISUSER:
 			addr := rpl[4]
-			if cjdns.IsAddress(addr) {
-				addr = cjdns.PadIPv6(addr)
+			if ipRegexp.MatchString(addr) {
+				addr = padIPv6(addr)
 
 				if _, ok := infoMap[addr]; ok {
 					info = new(ircInfo)
