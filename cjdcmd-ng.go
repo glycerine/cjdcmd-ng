@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/3M3RY/go-nodeinfo"
-	"github.com/3M3RY/go-cjdns/admin"
+	"github.com/inhies/go-cjdns/admin"
 	"github.com/spf13/cobra"
 	"net"
 	"os"
