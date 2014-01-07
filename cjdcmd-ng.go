@@ -3,8 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/inhies/go-cjdns/admin"
 	"github.com/3M3RY/go-nodeinfo"
+	"github.com/inhies/go-cjdns/admin"
 	"github.com/spf13/cobra"
 	"net"
 	"os"
@@ -34,13 +34,16 @@ func main() {
 	// AddPassCmd.Flags().StringVarP(&ConfFile, "conf", "c", "", "path to cjdroute.conf")
 
 	// rootCmd.AddCommand(AddPassCmd)
-	rootCmd.AddCommand(GetNodeinfoCmd)
-	rootCmd.AddCommand(SetNodeinfoCmd)
-	rootCmd.AddCommand(NickCmd)
-	rootCmd.AddCommand(PeersCmd)
-	rootCmd.AddCommand(PingCmd)
-	rootCmd.AddCommand(TraceCmd)
-	rootCmd.AddCommand(TunnelCmd)
+	rootCmd.AddCommand(
+		GetNodeinfoCmd,
+		SetNodeinfoCmd,
+		NickCmd,
+		PeersCmd,
+		PingCmd,
+		TraceCmd,
+		TunnelCmd,
+		LogCmd,
+	)
 
 	var err error
 	if Admin, err = admin.Connect(nil); err != nil {
