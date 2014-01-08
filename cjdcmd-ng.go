@@ -24,22 +24,26 @@ var (
 	Admin           *admin.Conn
 )
 
-var rootCmd = &cobra.Command{Use: os.Args[0]}
+var rootCmd = &cobra.Command{Use: "cjdcmd-ng"}
 
 func main() {
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
 	rootCmd.PersistentFlags().BoolVarP(&ResolveNodeinfo, "nodeinfo", "N", false, "resolve hostnames with nodeinfo")
 	rootCmd.PersistentFlags().BoolVarP(&ResolveSystem, "system-resolver", "S", true, "resolve hostnames with system resolver")
 	TraceCmd.Flags().BoolVarP(&NmapOutput, "nmap", "x", false, "format output as nmap XML")
-	//AddPassCmd.Flags().StringVarP(&ConfFile, "conf", "c", "", "path to cjdroute.conf")
+	// AddPassCmd.Flags().StringVarP(&ConfFile, "conf", "c", "", "path to cjdroute.conf")
 
-	//rootCmd.AddCommand(AddPassCmd)
-	rootCmd.AddCommand(GetNodeinfoCmd)
-	rootCmd.AddCommand(SetNodeinfoCmd)
-	rootCmd.AddCommand(NickCmd)
-	rootCmd.AddCommand(PeersCmd)
-	rootCmd.AddCommand(PingCmd)
-	rootCmd.AddCommand(TraceCmd)
+	// rootCmd.AddCommand(AddPassCmd)
+	rootCmd.AddCommand(
+		GetNodeinfoCmd,
+		SetNodeinfoCmd,
+		NickCmd,
+		PeersCmd,
+		PingCmd,
+		TraceCmd,
+		TunnelCmd,
+		LogCmd,
+	)
 
 	var err error
 	if Admin, err = admin.Connect(nil); err != nil {

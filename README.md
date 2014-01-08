@@ -3,7 +3,7 @@ cjdcmd-ng
 
 ```
 Usage: 
-  ./cjdcmd-ng [command]
+  cjdcmd-ng [command]
 
 Available Commands: 
   getnodeinfo [ADDRESS/HOSTNAME] :: resolves a host or address through NodeInfo
@@ -12,11 +12,10 @@ Available Commands:
   peers HOST      :: prints a host's peers
   ping HOST       :: pings a host
   trace HOST [HOST...] :: prints routes to hosts
+  tunnel          :: 
+  log             :: 
   help [command]  :: Help about any command
 ```
-
-
-
 
 ## Install from source
 
@@ -29,4 +28,5 @@ Run the following command to have cjdcmd-ng download, build, and install:
 ## Install from binary
 
 AMD64: http://urlcloud.net/NiKW
+
 A signature is at cjdcmd-ng.amd64.xz.sig

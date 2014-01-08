@@ -14,7 +14,22 @@ var PeersCmd = &cobra.Command{
 }
 
 func peers(cmd *cobra.Command, args []string) {
-	if len(args) != 1 {
+	if len(args) == 0 {
+		stats, err := Admin.InterfaceController_peerStats()
+		if err != nil {
+			fmt.Println("Error getting local peers,", err)
+		}
+
+		var addr string
+		for _, stat := range stats {
+			addr = stat.PublicKey.IP().String()
+			host, _, _ := resolve(addr)
+			fmt.Println("\t ", stat.PublicKey, addr, host)
+		}
+		return
+	}
+
+	if len(args) > 1 {
 		cmd.Usage()
 		os.Exit(1)
 	}
