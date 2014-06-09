@@ -1,3 +1,17 @@
+/*
+ * You may redistribute this program and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package main
 
 import (
@@ -13,13 +27,6 @@ import (
 const minInterval = time.Millisecond * 200
 
 var (
-	PingCmd = &cobra.Command{
-		Use:   "ping HOST",
-		Short: "pings a host",
-		Long:  `Sends a CJDNS level ping to a given host.`,
-		Run:   ping,
-	}
-
 	count    int
 	interval time.Duration
 )
@@ -29,7 +36,9 @@ func init() {
 	PingCmd.PersistentFlags().DurationVarP(&interval, "interval", "i", time.Second, " Wait time between sending each packet.")
 }
 
-func ping(cmd *cobra.Command, args []string) {
+func pingCmd(cmd *cobra.Command, args []string) {
+	c := Connect()
+
 	if len(args) != 1 {
 		cmd.Usage()
 		os.Exit(1)
@@ -72,7 +81,9 @@ func ping(cmd *cobra.Command, args []string) {
 		if received != 0 {
 			avgT /= received
 			fmt.Fprintf(os.Stdout, "rtt min/avg/max = %2.f/%.2f/%.2f ms\n", minT, avgT, maxT)
-			fmt.Fprintln(os.Stdout, "CJDNS version: "+version)
+			if version != "" {
+				fmt.Fprintln(os.Stdout, "CJDNS version:", version)
+			}
 
 		}
 		os.Exit(0)
@@ -81,7 +92,7 @@ func ping(cmd *cobra.Command, args []string) {
 	mu := new(sync.Mutex)
 	ping := func() {
 		mu.Lock()
-		msInt, version, err = Admin.RouterModule_pingNode(addr, 0)
+		msInt, version, err = c.RouterModule_pingNode(addr, 0)
 		transmitted++
 		ms = float32(msInt)
 
@@ -89,7 +100,8 @@ func ping(cmd *cobra.Command, args []string) {
 			fmt.Fprintf(os.Stdout, "error: %s\n", err)
 		} else {
 			received++
-			fmt.Fprintf(os.Stdout, "time=%.3f ms\n", ms)
+			fmt.Fprintf(os.Stdout, "Reply from %v req=%v time=%03v ms\n",
+				addr, transmitted, ms)
 			switch {
 			case ms < minT:
 				minT = ms

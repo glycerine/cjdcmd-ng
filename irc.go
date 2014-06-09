@@ -12,13 +12,6 @@ import (
 	"time"
 )
 
-var NickCmd = &cobra.Command{
-	Use:   "nick ADDRESS/HOSTNAME",
-	Short: "resolves a host or address to an IRC nick",
-	Long:  `Scrapes HyperIRC for a given address or hostname.`,
-	Run:   findNick,
-}
-
 var (
 	HypIRCAddrs = []string{
 		"[fcbf:7bbc:32e4:0716:bd00:e936:c927:fc14]:6667",
@@ -39,7 +32,7 @@ const (
 	RPL_ENDOFNAMES    = "3666"
 )
 
-func findNick(cmd *cobra.Command, args []string) {
+func nickCmd(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		cmd.Usage()
 		os.Exit(1)
@@ -207,9 +200,7 @@ func (c *ircClient) readWhois(infoMap map[string]*ircInfo) (end bool) {
 		switch rpl[0] {
 		case RPL_WHOISUSER:
 			addr := rpl[4]
-			if ipRegexp.MatchString(addr) {
-				addr = padIPv6(addr)
-
+			if ipRegex.MatchString(addr) {
 				if _, ok := infoMap[addr]; ok {
 					info = new(ircInfo)
 					infoMap[addr] = info

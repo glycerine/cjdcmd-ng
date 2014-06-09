@@ -1,3 +1,17 @@
+/*
+ * You may redistribute this program and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package main
 
 import (
@@ -11,18 +25,16 @@ import (
 	"time"
 )
 
-var TraceCmd = &cobra.Command{
-	Use:   "trace HOST [HOST...]",
-	Short: "prints routes to hosts",
-	Long:  `Parses the local routing table and prints the routes to the given hosts.`,
-	Run:   trace,
+func init() {
+	TracerouteCmd.Flags().BoolVarP(&NmapOutput, "nmap", "x", false, "print result in nmap XML to stdout")
 }
 
-func trace(cmd *cobra.Command, args []string) {
+func tracerouteCmd(cmd *cobra.Command, args []string) {
 	if len(args) == 0 {
 		cmd.Usage()
 		os.Exit(1)
 	}
+
 	var run *NmapRun
 	startTime := time.Now()
 	if NmapOutput {
@@ -48,7 +60,8 @@ func trace(cmd *cobra.Command, args []string) {
 		targets = append(targets, target)
 	}
 
-	table, err := Admin.NodeStore_dumpTable()
+	c := Connect()
+	table, err := c.NodeStore_dumpTable()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to get routing table:", err)
 	}
@@ -60,9 +73,9 @@ func trace(cmd *cobra.Command, args []string) {
 		} else {
 			fmt.Fprintln(os.Stdout, target)
 		}
-		traces, err := target.trace(table)
+		traces, err := target.trace(c, table)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Faild to trace %s: %s\n", target, err)
+			fmt.Fprintf(os.Stderr, "Failed to trace %s: %s\n", target, err)
 			continue
 		}
 		if NmapOutput {
@@ -111,11 +124,11 @@ func newTarget(host string) (t *target, err error) {
 
 var notInTableError = errors.New("not found in routing table")
 
-func (t *target) trace(table admin.Routes) (hostTraces []*Host, err error) {
+func (t *target) trace(c *admin.Conn, table admin.Routes) (hostTraces []*Host, err error) {
 	for _, r := range table {
 		if t.addr.Equal(*r.IP) {
 			hops := table.Hops(*r.Path)
-			if hostTrace, err := t.traceHops(hops); err != nil {
+			if hostTrace, err := t.traceHops(c, hops); err != nil {
 				fmt.Fprintf(os.Stderr, "failed to trace %s, %s\n", r, err)
 			} else {
 				hostTraces = append(hostTraces, hostTrace)
@@ -130,7 +143,7 @@ func (t *target) trace(table admin.Routes) (hostTraces []*Host, err error) {
 	return
 }
 
-func (t *target) traceHops(hops admin.Routes) (*Host, error) {
+func (t *target) traceHops(c *admin.Conn, hops admin.Routes) (*Host, error) {
 	hops.SortByPath()
 	startTime := time.Now().Unix()
 	trace := &Trace{Proto: "CJDNS"}
@@ -140,7 +153,7 @@ func (t *target) traceHops(hops admin.Routes) (*Host, error) {
 			continue
 		}
 		// Ping by path so we don't get RTT for a different route.
-		rtt, _, err := Admin.RouterModule_pingNode(p.Path.String(), 0)
+		rtt, _, err := c.RouterModule_pingNode(p.Path.String(), 0)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return nil, err
