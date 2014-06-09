@@ -135,6 +135,12 @@ var (
 		Short: "Returns the bytes of memory allocated by the router",
 		Run:   memoryCmd,
 	}
+
+	NickCmd = &cobra.Command{
+		Use:   "nick <IPv6/DNS>",
+		Short: "Scrape HyperIRC for nicks using host",
+		Run:   nickCmd,
+	}
 )
 
 func init() {
@@ -158,6 +164,7 @@ func init() {
 		DumpCmd,
 		KillCmd,
 		MemoryCmd,
+		NickCmd,
 	)
 }
 
