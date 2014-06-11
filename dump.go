@@ -114,6 +114,11 @@ func printPrettySubtable(table admin.Routes, spacer string, curLevel, stop int) 
 		return
 	}
 
+	if len(sublevels) == 0 {
+		fmt.Fprintf(os.Stdout, "                   %s└╌┄┈ \n", spacer)
+		return
+	}
+
 	for _, sublevel := range sublevels[:len(sublevels)-1] {
 		here := sublevel[0]
 		if len(sublevel) == 1 {
