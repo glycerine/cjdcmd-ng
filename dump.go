@@ -62,6 +62,9 @@ func dumpTablePlain(table admin.Routes) {
 func dumpTablePretty(table admin.Routes) {
 	table.SortByPath()
 
+	if len(table) < 2 {
+		return
+	}
 	fmt.Fprintf(os.Stdout, "%s┐\n", table[0].Path)
 
 	printPrettySubtable(table[1:], "", 0, StopLevel)
