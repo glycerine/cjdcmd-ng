@@ -22,7 +22,7 @@ import (
 	"regexp"
 )
 
-const Version = "0.6.0"
+const Version = "0.7.0"
 
 var (
 	ipRegex   = regexp.MustCompile("^fc[a-f0-9]{1,2}:([a-f0-9]{0,4}:){2,6}[a-f0-9]{1,4}$")
@@ -165,6 +165,7 @@ func init() {
 		KillCmd,
 		MemoryCmd,
 		NickCmd,
+		ConvertCmd,
 	)
 }
 

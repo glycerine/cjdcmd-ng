@@ -18,6 +18,7 @@ import (
 	"bufio"
 	"fmt"
 	cjdnsConfig "github.com/inhies/go-cjdns/config"
+	"github.com/inhies/go-cjdns/key"
 	"github.com/spf13/cobra"
 	"net"
 	"os"
@@ -263,10 +264,27 @@ selectIF:
 	} else {
 		bind = iX["bind"].(string)
 	}
+	
+	public, ok := conf["publicKey"].(string)
+	if !ok {
+		s, ok := conf["private"].(string)
+		if !ok {
+			fmt.Println("no public or private key in conf file")
+			os.Exit(1)
+		}
+		private, err := key.DecodePrivate(s)
+		if err != nil {
+			fmt.Println("error determining public key,", err)
+			os.Exit(1)
+		}
+		public = private.Pubkey().String()
+	}
+
+	
 	fmt.Println("Here are the details to be shared with your new peer:")
 	fmt.Printf("\"%v\":{\n", bind)
 	fmt.Printf("\t\"password\":\"%v\",\n", pass["password"].(string))
-	fmt.Printf("\t\"publicKey\":\"%v\"\n", conf["publicKey"].(string))
+	fmt.Printf("\t\"publicKey\":\"%v\"\n", public)
 	fmt.Printf("}\n")
 
 }
