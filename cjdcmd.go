@@ -22,7 +22,7 @@ import (
 	"regexp"
 )
 
-const Version = "0.7.0"
+const Version = "0.7.1"
 
 var (
 	ipRegex   = regexp.MustCompile("^fc[a-f0-9]{1,2}:([a-f0-9]{0,4}:){2,6}[a-f0-9]{1,4}$")

@@ -83,7 +83,7 @@ func resolveIP(ip string) (hostname string, err error) {
 	if !ReverseLookup {
 		return ip, nil
 	}
-	
+
 	var ok bool
 
 	rMutex.RLock()
@@ -102,10 +102,10 @@ func resolveIP(ip string) (hostname string, err error) {
 
 	// try the system DNS setup
 	result, _ := net.LookupAddr(ip)
-	
+
 	if len(result) != 0 {
 		hostname = result[0]
-		
+
 		// Trim the trailing period becuase it annoys inhies
 		hostname = strings.TrimRight(hostname, ".")
 

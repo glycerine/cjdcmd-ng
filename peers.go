@@ -46,7 +46,7 @@ func peersCmd(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, "Could not resolve "+args[0]+".")
 		os.Exit(1)
 	}
-	
+
 	c := Connect()
 	table, err := c.NodeStore_dumpTable()
 	if err != nil {

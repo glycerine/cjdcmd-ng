@@ -56,6 +56,23 @@ func pingCmd(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	table, err := c.NodeStore_dumpTable()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to get routing table:", err)
+	}
+	table.SortByQuality()
+
+	var path string
+	for _, r := range table {
+		if r.IP.Equal(ip) {
+			path = r.Path.String()
+		}
+	}
+	if path == "" {
+		fmt.Fprintf(os.Stderr, "Cannot send router level ping, node not found in routing table")
+		os.Exit(1)
+	}
+
 	var (
 		version                                     string
 		ms, minT, avgT, maxT, transmitted, received float32
@@ -92,7 +109,7 @@ func pingCmd(cmd *cobra.Command, args []string) {
 	mu := new(sync.Mutex)
 	ping := func() {
 		mu.Lock()
-		msInt, version, err = c.RouterModule_pingNode(addr, 0)
+		msInt, version, err = c.RouterModule_pingNode(path, 0)
 		transmitted++
 		ms = float32(msInt)
 
@@ -101,7 +118,7 @@ func pingCmd(cmd *cobra.Command, args []string) {
 		} else {
 			received++
 			fmt.Fprintf(os.Stdout, "Reply from %v req=%v time=%03v ms\n",
-				addr, transmitted, ms)
+				path, transmitted, ms)
 			switch {
 			case ms < minT:
 				minT = ms

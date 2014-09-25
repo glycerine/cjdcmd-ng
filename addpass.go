@@ -264,7 +264,7 @@ selectIF:
 	} else {
 		bind = iX["bind"].(string)
 	}
-	
+
 	public, ok := conf["publicKey"].(string)
 	if !ok {
 		s, ok := conf["private"].(string)
@@ -280,7 +280,6 @@ selectIF:
 		public = private.Pubkey().String()
 	}
 
-	
 	fmt.Println("Here are the details to be shared with your new peer:")
 	fmt.Printf("\"%v\":{\n", bind)
 	fmt.Printf("\t\"password\":\"%v\",\n", pass["password"].(string))
