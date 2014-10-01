@@ -22,50 +22,31 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	ConvertCmd = &cobra.Command{
-		Use:   "convert",
-		Short: "Convert key forms",
-		Run: func(cmd *cobra.Command, args []string) {
-			ConvertPrivateCmd.Help()
-			ConvertPublicCmd.Help()
+var ConvertCmd = &cobra.Command{
+	Use:   "convert",
+	Short: "Convert key forms",
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) == 0 {
+			cmd.Help()
 			os.Exit(1)
-		},
-	}
-
-	ConvertPrivateCmd = &cobra.Command{
-		Use:   "private",
-		Short: "Convert a private key into a public key",
-		Run: func(cmd *cobra.Command, args []string) {
-			for _, arg := range args {
+		}
+		for _, arg := range args {
+			if len(arg) == 64 {
 				k, err := key.DecodePrivate(arg)
 				if err != nil {
-					fmt.Fprintln(os.Stderr, "Failed to decode private key,", err)
+					fmt.Fprintln(os.Stderr, "Failed to decode key,", err)
 					os.Exit(1)
 				}
 				fmt.Fprintln(os.Stdout, k.Pubkey())
-			}
-		},
-	}
-	ConvertPublicCmd = &cobra.Command{
-		Use:   "public",
-		Short: "Convert a pubic key into an IP address",
-		Run: func(cmd *cobra.Command, args []string) {
-			for _, arg := range args {
+			} else {
 				k, err := key.DecodePublic(arg)
 				if err != nil {
-					fmt.Fprintln(os.Stderr, "Failed to decode public key,", err)
+					fmt.Fprintln(os.Stderr, "Failed to decode key,", err)
 					os.Exit(1)
 				}
 				fmt.Fprintln(os.Stdout, k.IP())
 			}
-		},
-	}
-)
+		}
 
-func init() {
-	ConvertCmd.AddCommand(
-		ConvertPrivateCmd,
-		ConvertPublicCmd,
-	)
+	},
 }
