@@ -38,3 +38,20 @@ To install go, check out the [install instructions](http://golang.org/doc/instal
 Run the following command to have cjdcmd-ng download, build, and install:
 
     go get github.com/ehmry/cjdcmd-ng
+
+
+## Configuration
+
+You'll need a to create the file ''~/.cjdnsadmin'' so that cjdcmd-ng knows how
+to connect to CJDNS.
+
+```
+{
+        "addr": "127.0.0.1",
+        "port": 11234,
+        "password": "xxxxxxxxxxxxxxxxxxxxxxx",
+        "config": "/etc/cjdroute.conf"
+}
+```
+
+If you are using NixOS (like me) the password is stored in /etc/cjdns.keys.
