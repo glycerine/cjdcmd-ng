@@ -130,12 +130,6 @@ var (
 		Short: "Gracefully kills cjdns",
 	}
 
-	MemoryCmd = &cobra.Command{
-		Use:   "memory",
-		Short: "Returns the bytes of memory allocated by the router",
-		Run:   memoryCmd,
-	}
-
 	NickCmd = &cobra.Command{
 		Use:   "nick <IPv6/DNS>",
 		Short: "Scrape HyperIRC for nicks using host",
@@ -163,7 +157,6 @@ func init() {
 		PassGenCmd,
 		DumpCmd,
 		KillCmd,
-		MemoryCmd,
 		NickCmd,
 		ConvertCmd,
 	)

@@ -56,10 +56,6 @@ func logCmd(cmd *cobra.Command, args []string) {
 	for {
 		select {
 		case m := <-msgs:
-			//if !ok {
-			//	fmt.Println("Error reading log response from cjdns.")
-			//	os.Exit(1)
-			//}
 			fmt.Printf(format,
 				time.Unix(m.Time, 0).Format(timeFormat),
 				m.Level, m.File, m.Line, m.Message,
