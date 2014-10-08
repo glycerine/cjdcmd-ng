@@ -17,7 +17,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	cjdnsConfig "github.com/inhies/go-cjdns/config"
+	cjdnsConfig "github.com/ehmry/go-cjdns/config"
 	"github.com/inhies/go-cjdns/key"
 	"github.com/spf13/cobra"
 	"net"

@@ -17,7 +17,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/inhies/go-cjdns/admin"
+	"github.com/ehmry/go-cjdns/admin"
 	"github.com/inhies/go-cjdns/key"
 	"github.com/spf13/cobra"
 	"io/ioutil"

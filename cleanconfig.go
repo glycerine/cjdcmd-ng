@@ -16,7 +16,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/inhies/go-cjdns/config"
+	"github.com/ehmry/go-cjdns/config"
 	"github.com/spf13/cobra"
 	"os"
 )
