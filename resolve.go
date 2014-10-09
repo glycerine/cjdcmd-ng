@@ -78,7 +78,7 @@ func resolve(host string) (hostname string, ip net.IP, err error) {
 	return
 }
 
-// Resolve an IP to a domain name using the system DNS settings first, then HypeDNS
+// Resolve an IP to a domain name using the system DNS
 func resolveIP(ip string) (hostname string, err error) {
 	if !ReverseLookup {
 		return ip, nil
@@ -100,8 +100,9 @@ func resolveIP(ip string) (hostname string, err error) {
 		return
 	}
 
+	var result []string
 	// try the system DNS setup
-	result, _ := net.LookupAddr(ip)
+	result, err = net.LookupAddr(ip)
 
 	if len(result) != 0 {
 		hostname = result[0]
@@ -113,10 +114,10 @@ func resolveIP(ip string) (hostname string, err error) {
 		return
 	}
 
-	return ip, nil
+	return
 }
 
-// Resolve a hostname to an IP address using the system DNS settings first, then HypeDNS
+// Resolve a hostname to an IP address using the system DNS
 func resolveHost(hostname string) (ip string, err error) {
 	var ok bool
 

@@ -28,10 +28,21 @@ func peersCmd(cmd *cobra.Command, args []string) {
 			fmt.Println("Error getting local peers,", err)
 		}
 
-		var addr string
+		//var host addr string
 		for _, node := range stats {
-			addr = node.PublicKey.IP().String()
-			fmt.Fprintf(os.Stdout, "Incoming: %t | IP: %-39s -- Path: %s\n", node.IsIncoming, addr, node.SwitchLabel)
+			ip := node.PublicKey.IP().String()
+			host, _ := resolveIP(ip)
+
+			fmt.Fprintf(os.Stdout, "%-39s %s %s\n"+
+				"\tIncoming: %-5t      State: %s \n"+
+				"\tBytes In: %-10d Bytes Out: %d\n"+
+				"\tLost Packets: %d\n\n", // Last seen: %s\n",
+
+				ip, node.SwitchLabel, host,
+				node.IsIncoming, node.State,
+				node.BytesIn, node.BytesOut,
+				node.LostPackets, // time.Duration(node.Last),
+			)
 		}
 		return
 	}
@@ -39,30 +50,5 @@ func peersCmd(cmd *cobra.Command, args []string) {
 	if len(args) > 1 {
 		cmd.Usage()
 		os.Exit(1)
-	}
-
-	_, ip, err := resolve(args[0])
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Could not resolve "+args[0]+".")
-		os.Exit(1)
-	}
-
-	c := Connect()
-	table, err := c.NodeStore_dumpTable()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to get routing table:", err)
-		os.Exit(1)
-	}
-
-	peers := table.Peers(ip)
-
-	if len(peers) == 0 {
-		fmt.Fprintln(os.Stderr, "no peers found in local routing table")
-		os.Exit(1)
-	}
-	for _, p := range peers {
-		host, _, _ := resolve(p.IP.String())
-		fmt.Println("\t ", p.IP, host)
-		//fmt.Printf("IP: %v -- Path: %s -- Link: %.0f\n", tText, node.Path, node.Link)
 	}
 }

@@ -139,7 +139,7 @@ var (
 
 func init() {
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
-	rootCmd.PersistentFlags().BoolVarP(&ReverseLookup, "resolve", "r", false, "reverse resolve IP addresses")
+	rootCmd.PersistentFlags().BoolVarP(&ReverseLookup, "resolve", "r", true, "reverse resolve IP addresses")
 
 	rootCmd.AddCommand(
 		PingCmd,
