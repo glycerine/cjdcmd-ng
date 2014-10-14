@@ -20,30 +20,46 @@ import (
 	"os"
 )
 
+func showLocalPeers() {
+	c := Connect()
+	stats, err := c.InterfaceController_peerStats()
+	if err != nil {
+		fmt.Println("Error getting local peers,", err)
+	}
+
+	var tIn, tOut int64
+
+	for _, node := range stats {
+		tIn += node.BytesIn
+		tOut += node.BytesOut
+	}
+
+	//var host addr string
+	for _, node := range stats {
+		ip := node.PublicKey.IP().String()
+		host, _ := resolveIP(ip)
+
+		rIn, rOut := ratio(node.BytesIn, node.BytesOut)
+
+		fmt.Fprintf(os.Stdout, "%-39s %s %s\n"+
+			"\tIncoming: %-5t      State: %s \n"+
+			"\tBytes In:  %10d (%d%%)\n"+
+			"\tBytes Out: %10d (%d%%)\n"+
+			"\tIn/Out: %d/%d  Lost Packets: %d\n\n", // Last seen: %s\n",
+
+			ip, node.SwitchLabel, host,
+			node.IsIncoming, node.State,
+			node.BytesIn, (node.BytesIn * 100 / tIn),
+			node.BytesOut, (node.BytesOut * 100 / tOut),
+			rIn, rOut,
+			node.LostPackets, // time.Duration(node.Last),
+		)
+	}
+}
+
 func peersCmd(cmd *cobra.Command, args []string) {
 	if len(args) == 0 {
-		c := Connect()
-		stats, err := c.InterfaceController_peerStats()
-		if err != nil {
-			fmt.Println("Error getting local peers,", err)
-		}
-
-		//var host addr string
-		for _, node := range stats {
-			ip := node.PublicKey.IP().String()
-			host, _ := resolveIP(ip)
-
-			fmt.Fprintf(os.Stdout, "%-39s %s %s\n"+
-				"\tIncoming: %-5t      State: %s \n"+
-				"\tBytes In: %-10d Bytes Out: %d\n"+
-				"\tLost Packets: %d\n\n", // Last seen: %s\n",
-
-				ip, node.SwitchLabel, host,
-				node.IsIncoming, node.State,
-				node.BytesIn, node.BytesOut,
-				node.LostPackets, // time.Duration(node.Last),
-			)
-		}
+		showLocalPeers()
 		return
 	}
 
@@ -51,4 +67,51 @@ func peersCmd(cmd *cobra.Command, args []string) {
 		cmd.Usage()
 		os.Exit(1)
 	}
+
+	_, ip, err := resolve(args[0])
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Could not resolve %q.\n", args[0])
+		os.Exit(1)
+	}
+	c := Connect()
+	table, err := c.NodeStore_dumpTable()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to get routing table:", err)
+		os.Exit(1)
+	}
+	peers := table.Peers(ip)
+	if len(peers) == 0 {
+		fmt.Fprintln(os.Stderr, "no peers found in local routing table")
+		os.Exit(1)
+	}
+	peers.SortByQuality()
+
+	for _, p := range peers {
+		host, _, _ := resolve(p.IP.String())
+		//fmt.Printf("\t%-39s %s\n", p.IP, host)
+		fmt.Printf("%-39s %s Link: %s %s\n", p.IP, p.Path, p.Link, host)
+	}
+
+}
+
+const maxSpread = 32
+
+func ratio(in, out int64) (int64, int64) {
+	var factor int64
+	if in > out {
+		factor = in / maxSpread
+	} else if out > in {
+		factor = out / maxSpread
+	} else {
+		return 1, 1
+	}
+
+	out /= factor
+	in /= factor
+
+	for out%2 == 0 {
+		out /= 2
+		in /= 2
+	}
+	return in, out
 }

@@ -52,7 +52,7 @@ func pingCmd(cmd *cobra.Command, args []string) {
 	host, ip, err := resolve(args[0])
 	addr := ip.String()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not resolve %s: %s", args[0], err)
+		fmt.Fprintf(os.Stderr, "Could not resolve %s: %s\n", args[0], err)
 		os.Exit(1)
 	}
 
@@ -69,7 +69,7 @@ func pingCmd(cmd *cobra.Command, args []string) {
 		}
 	}
 	if path == "" {
-		fmt.Fprintf(os.Stderr, "Cannot send router level ping, node not found in routing table")
+		fmt.Fprintln(os.Stderr, "Cannot send router level ping, node not found in routing table")
 		os.Exit(1)
 	}
 
