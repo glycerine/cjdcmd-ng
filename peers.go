@@ -39,20 +39,19 @@ func showLocalPeers() {
 		ip := node.PublicKey.IP().String()
 		host, _ := resolveIP(ip)
 
-		rIn, rOut := ratio(node.BytesIn, node.BytesOut)
-
-		fmt.Fprintf(os.Stdout, "%-39s %s %s\n"+
+		fmt.Fprintf(os.Stdout, "%-39s %s\n"+
 			"\tIncoming: %-5t      State: %s \n"+
 			"\tBytes In:  %10d (%d%%)\n"+
 			"\tBytes Out: %10d (%d%%)\n"+
-			"\tIn/Out: %d/%d  Lost Packets: %d\n\n", // Last seen: %s\n",
+			"\tIn/Out: %s  Lost Packets: %d\n\n",
+			// Last seen: %s\n",
 
-			ip, node.SwitchLabel, host,
+			ip, host,
 			node.IsIncoming, node.State,
 			node.BytesIn, (node.BytesIn * 100 / tIn),
 			node.BytesOut, (node.BytesOut * 100 / tOut),
-			rIn, rOut,
-			node.LostPackets, // time.Duration(node.Last),
+			ratio(node.BytesIn, node.BytesOut), node.LostPackets,
+		// time.Duration(node.Last),
 		)
 	}
 }
@@ -96,14 +95,18 @@ func peersCmd(cmd *cobra.Command, args []string) {
 
 const maxSpread = 32
 
-func ratio(in, out int64) (int64, int64) {
+func ratio(in, out int64) string {
+	if in == 0 || out == 0 {
+		return "∞"
+	}
+
 	var factor int64
 	if in > out {
 		factor = in / maxSpread
 	} else if out > in {
 		factor = out / maxSpread
 	} else {
-		return 1, 1
+		return "1/1"
 	}
 
 	out /= factor
@@ -113,5 +116,5 @@ func ratio(in, out int64) (int64, int64) {
 		out /= 2
 		in /= 2
 	}
-	return in, out
+	return fmt.Sprintf("%d/%d", in, out)
 }
