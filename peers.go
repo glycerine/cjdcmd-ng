@@ -39,14 +39,19 @@ func showLocalPeers() {
 		ip := node.PublicKey.IP().String()
 		host, _ := resolveIP(ip)
 
-		fmt.Fprintf(os.Stdout, "%-39s %s\n"+
-			"\tIncoming: %-5t      State: %s \n"+
+		if len(host) == 0 {
+			host = ip
+		}
+
+		fmt.Fprintf(os.Stdout, "%s %s\n"+
+			"\tIncoming: %-5t\n"+
+			"\tState: %s \n"+
 			"\tBytes In:  %10d (%d%%)\n"+
 			"\tBytes Out: %10d (%d%%)\n"+
 			"\tIn/Out: %s  Lost Packets: %d\n\n",
 			// Last seen: %s\n",
 
-			ip, host,
+			node.PublicKey, host,
 			node.IsIncoming, node.State,
 			node.BytesIn, (node.BytesIn * 100 / tIn),
 			node.BytesOut, (node.BytesOut * 100 / tOut),
