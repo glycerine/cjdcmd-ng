@@ -22,7 +22,12 @@ import (
 	"regexp"
 )
 
-const Version = "0.7.1"
+const Version = "0.8.0"
+
+func die(format string, msg ...interface{}) {
+	fmt.Fprintf(os.Stderr, format+"\n", msg...)
+	os.Exit(1)
+}
 
 var (
 	ipRegex   = regexp.MustCompile("^fc[a-f0-9]{1,2}:([a-f0-9]{0,4}:){2,6}[a-f0-9]{1,4}$")
@@ -135,6 +140,20 @@ var (
 		Short: "Scrape HyperIRC for nicks using host",
 		Run:   nickCmd,
 	}
+
+	ConnectCmd = &cobra.Command{
+		Use:   "connect PUBLIC_KEY HOST:PORT [ PASSWORD ] [ INTERFACE_INDEX ]",
+		Short: "Connect directly to another node over UDP",
+		Run:   connectCmd,
+	}
+
+	/*
+		ListenCmd = &cobra.Command {
+			Use: "listen [ADDRESS:]PORT",
+			Short: "Create a new UDP interface",
+			Run: listenCmd,
+		}
+	*/
 )
 
 func init() {
@@ -159,6 +178,8 @@ func init() {
 		KillCmd,
 		NickCmd,
 		ConvertCmd,
+		ConnectCmd,
+		//ListenCmd,
 	)
 }
 
