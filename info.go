@@ -16,38 +16,38 @@ package main
 
 import (
 	"fmt"
-	"os"
-
-	//"github.com/ehmry/go-cjdns/admin"
 	"github.com/spf13/cobra"
+	"os"
 )
 
-func routeCmd(cmd *cobra.Command, args []string) {
+func infoCmd(cmd *cobra.Command, args []string) {
 	if len(args) < 1 {
 		cmd.Usage()
 		os.Exit(1)
 	}
 	c := Connect()
 
-	var addr string
 	for _, host := range args {
 		_, ip, err := resolve(host)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			continue
 		}
-		addr = ip.String()
-		node, err := c.NodeStore_nodeForAddr(addr)
 
-		for err == nil && node.RouteLabel != "0000.0000.0000.0001" {
-			node, err = c.NodeStore_nodeForAddr(addr)
-			fmt.Fprintf(os.Stdout, "%-39s - %s - Reach: %10d\n", addr, node.RouteLabel, node.Reach)
-			addr = node.BestParent.IP
-		}
+		node, err := c.NodeStore_nodeForAddr(ip.String())
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			continue
 		}
-		fmt.Fprintln(os.Stdout)
+
+		fmt.Fprintf(os.Stdout,
+			"%s\n"+
+				"\tKey: %s\n"+
+				"\tProtocol version: %d\n"+
+				"\tBest Parent: %s\n"+
+				"\tLink Count: %d\n"+
+				"\tReach: %d\n\n",
+			host, node.Key, node.ProtocolVersion, node.BestParent.IP, node.LinkCount, node.Reach,
+		)
 	}
 }

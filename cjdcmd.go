@@ -154,6 +154,11 @@ var (
 			Run: listenCmd,
 		}
 	*/
+	InfoCmd = &cobra.Command{
+		Use:   "info HOST [ HOST ... ]",
+		Short: "Show node information",
+		Run:   infoCmd,
+	}
 )
 
 func init() {
@@ -163,7 +168,7 @@ func init() {
 	rootCmd.AddCommand(
 		PingCmd,
 		RouteCmd,
-		TracerouteCmd,
+		//TracerouteCmd,
 		PubKeyToIPCmd,
 		PeersCmd,
 		HostCmd,
@@ -180,10 +185,21 @@ func init() {
 		ConvertCmd,
 		ConnectCmd,
 		//ListenCmd,
+		InfoCmd,
 	)
 }
 
-func main() { rootCmd.Execute() }
+func main() {
+	rootCmd.Execute()
+	/*
+		c, _, err := rootCmd.Find(os.Args[1:])
+		if err != nil {
+			infoCmd(InfoCmd, os.Args[1:])
+		} else {
+			c.Execute()
+		}
+	*/
+}
 
 // Connect connects to
 func Connect() *admin.Conn {
