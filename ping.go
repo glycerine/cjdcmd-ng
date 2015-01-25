@@ -80,8 +80,10 @@ func pingCmd(cmd *cobra.Command, args []string) {
 		default:
 			loss = (received / transmitted) * 100.0
 		}
-
-		fmt.Fprint(os.Stdout, "\n--- "+host+" ---\n")
+	
+		if host != "" {
+			fmt.Fprint(os.Stdout, "--- "+host+" ---\n")
+		}
 		fmt.Fprintf(os.Stdout, "%.0f pings transmitted, %.0f received, %2.0f%% ping loss, time %s\n", transmitted, received, loss, duration)
 		if received != 0 {
 			avgT /= received

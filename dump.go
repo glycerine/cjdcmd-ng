@@ -41,12 +41,14 @@ func dumpCmd(cmd *cobra.Command, args []string) {
 
 	if Pretty {
 		dumpTablePretty(table)
+	} else if Verbose {
+		dumpTableVerbose(table)
 	} else {
-		dumpTablePlain(table)
+		dumpTable(table)
 	}
 }
 
-func dumpTablePlain(table admin.Routes) {
+func dumpTableVerbose(table admin.Routes) {
 	table.SortByQuality()
 	k := 1
 	for _, v := range table {
@@ -55,6 +57,14 @@ func dumpTablePlain(table admin.Routes) {
 				"%03d IP: %-39v -- Version: %d -- Path: %s -- Link: %s\n",
 				k, v.IP, v.Version, v.Path, v.Link)
 			k++
+		}
+	}
+}
+
+func dumpTable(table admin.Routes) {
+	for _, v := range table {
+		if v.Link >= 1 {
+			fmt.Fprintln(os.Stdout, v.IP)
 		}
 	}
 }

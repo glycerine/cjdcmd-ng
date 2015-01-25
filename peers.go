@@ -44,22 +44,26 @@ func showLocalPeers() {
 		if len(host) == 0 {
 			host = ip
 		}
+		if Verbose {
 
-		fmt.Fprintf(os.Stdout, "%s %s\n"+
-			"\tIncoming: %-5t\n"+
-			"\tState: %s \n"+
-			"\tBytes In:  %10d (%d%%)\n"+
-			"\tBytes Out: %10d (%d%%)\n"+
-			"\tIn/Out: %s  Lost Packets: %d\n\n",
-			// Last seen: %s\n",
+			fmt.Fprintf(os.Stdout, "%s %s\n"+
+				"\tIncoming: %-5t\n"+
+				"\tState: %s \n"+
+				"\tBytes In:  %10d (%d%%)\n"+
+				"\tBytes Out: %10d (%d%%)\n"+
+				"\tIn/Out: %s  Lost Packets: %d\n\n",
+				// Last seen: %s\n",
 
-			node.PublicKey, host,
-			node.IsIncoming, node.State,
-			node.BytesIn, (node.BytesIn * 100 / tIn),
-			node.BytesOut, (node.BytesOut * 100 / tOut),
-			ratio(node.BytesIn, node.BytesOut), node.LostPackets,
-		// time.Duration(node.Last),
-		)
+				node.PublicKey, host,
+				node.IsIncoming, node.State,
+				node.BytesIn, (node.BytesIn * 100 / tIn),
+				node.BytesOut, (node.BytesOut * 100 / tOut),
+				ratio(node.BytesIn, node.BytesOut), node.LostPackets,
+			// time.Duration(node.Last),
+			)
+		} else {
+			fmt.Fprintln(os.Stdout, ip)
+		}
 	}
 }
 
@@ -97,7 +101,12 @@ func peersCmd(cmd *cobra.Command, args []string) {
 			fmt.Fprintln(os.Stderr, "received malformed key ", s[24:])
 			continue
 		}
-		fmt.Fprintf(os.Stdout, "%-39s %s \n", k.IP(), s[:3])
+		ip = k.IP()
+		if Verbose {
+			fmt.Fprintln(os.Stdout, s[:3], s[3:24], s[24:], ip)
+		} else {
+			fmt.Fprintln(os.Stdout, ip)
+		}
 	}
 }
 

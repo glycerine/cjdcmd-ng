@@ -168,7 +168,7 @@ func init() {
 	rootCmd.AddCommand(
 		PingCmd,
 		RouteCmd,
-		//TracerouteCmd,
+		TracerouteCmd,
 		PubKeyToIPCmd,
 		PeersCmd,
 		HostCmd,

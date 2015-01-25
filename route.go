@@ -41,7 +41,11 @@ func routeCmd(cmd *cobra.Command, args []string) {
 
 		for err == nil && node.RouteLabel != "0000.0000.0000.0001" {
 			node, err = c.NodeStore_nodeForAddr(addr)
-			fmt.Fprintf(os.Stdout, "%-39s - %s - Reach: %10d\n", addr, node.RouteLabel, node.Reach)
+			if Verbose {
+				fmt.Fprintf(os.Stdout, "%-39s - %s - v%d - Reach: %10d\n", addr, node.RouteLabel, node.ProtocolVersion, node.Reach)
+			} else {
+				fmt.Fprintln(os.Stdout, addr)
+			}
 			addr = node.BestParent.IP
 		}
 		if err != nil {

@@ -18,11 +18,13 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/ehmry/go-cjdns/admin"
-	"github.com/spf13/cobra"
 	"net"
 	"os"
 	"time"
+
+	"github.com/ehmry/go-cjdns/admin"
+	"github.com/ehmry/go-cjdns/key"
+	"github.com/spf13/cobra"
 )
 
 func init() {
@@ -61,11 +63,6 @@ func tracerouteCmd(cmd *cobra.Command, args []string) {
 	}
 
 	c := Connect()
-	table, err := c.NodeStore_dumpTable()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to get routing table:", err)
-	}
-	table.SortByPath()
 
 	for _, target := range targets {
 		if NmapOutput {
@@ -73,13 +70,13 @@ func tracerouteCmd(cmd *cobra.Command, args []string) {
 		} else {
 			fmt.Fprintln(os.Stdout, target)
 		}
-		traces, err := target.trace(c, table)
+		trace, err := target.trace(c)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to trace %s: %s\n", target, err)
 			continue
 		}
 		if NmapOutput {
-			run.Hosts = append(run.Hosts, traces[0])
+			run.Hosts = append(run.Hosts, trace)
 		}
 	}
 	if NmapOutput {
@@ -94,7 +91,7 @@ func tracerouteCmd(cmd *cobra.Command, args []string) {
 		fmt.Fprint(os.Stdout, xml.Header)
 		fmt.Fprintln(os.Stdout, `<?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>`)
 		xEnc := xml.NewEncoder(os.Stdout)
-		err = xEnc.Encode(run)
+		err := xEnc.Encode(run)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Error:", err)
 			os.Exit(1)
@@ -124,36 +121,34 @@ func newTarget(host string) (t *target, err error) {
 
 var notInTableError = errors.New("not found in routing table")
 
-func (t *target) trace(c *admin.Conn, table admin.Routes) (hostTraces []*Host, err error) {
-	for _, r := range table {
-		if t.addr.Equal(*r.IP) {
-			hops := table.Hops(*r.Path)
-			if hostTrace, err := t.traceHops(c, hops); err != nil {
-				fmt.Fprintf(os.Stderr, "failed to trace %s, %s\n", r, err)
-			} else {
-				hostTraces = append(hostTraces, hostTrace)
-				fmt.Fprintln(os.Stdout)
-			}
-		}
+func (t *target) trace(c *admin.Conn) (hostTrace *Host, err error) {
+	var node *admin.StoreNode
+	var addr string
+	node, err = c.NodeStore_nodeForAddr(t.addr.String())
+	if err != nil {
+		return
 	}
-	if len(hostTraces) == 0 {
-		hostTraces = nil
-		err = notInTableError
-	}
-	return
-}
 
-func (t *target) traceHops(c *admin.Conn, hops admin.Routes) (*Host, error) {
-	hops.SortByPath()
+	var nodes []*admin.StoreNode
+	for err == nil && node.RouteLabel != "0000.0000.0000.0001" {
+		nodes = append(nodes, node)
+		addr = node.BestParent.IP
+		node, err = c.NodeStore_nodeForAddr(addr)
+	}
+	if err != nil {
+		return
+	}
+
 	startTime := time.Now().Unix()
 	trace := &Trace{Proto: "CJDNS"}
 
-	for y, p := range hops {
-		if y == 0 {
-			continue
-		}
+	var ttl int
+	for i := len(nodes) - 1; i > -1; i-- {
+		ttl++
+		node = nodes[i]
+
 		// Ping by path so we don't get RTT for a different route.
-		rtt, _, err := c.RouterModule_pingNode(p.Path.String(), 0)
+		rtt, _, err := c.RouterModule_pingNode(node.RouteLabel, 0)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return nil, err
@@ -161,19 +156,20 @@ func (t *target) traceHops(c *admin.Conn, hops admin.Routes) (*Host, error) {
 		if rtt == 0 {
 			rtt = 1
 		}
-		hostname, _, _ := resolve(p.IP.String())
-
+		//hostname, _, _ := resolve(p.IP.String())
+		pubKey, _ := key.DecodePublic(node.Key)
+		ip := pubKey.IP()
 		hop := &Hop{
-			TTL:    y,
+			TTL:    ttl,
 			RTT:    rtt,
-			IPAddr: p.IP,
-			Host:   hostname,
+			IPAddr: &ip,
+			//Host:   hostname,
 		}
 
 		if NmapOutput {
-			fmt.Fprintf(os.Stderr, "  %02d.% 4dms %s %s %s\n", y, rtt, p.Path, p.IP, hop.Host)
+			fmt.Fprintf(os.Stderr, "  %02d.% 4dms %s %s\n", ttl, rtt, node.RouteLabel, ip)
 		} else {
-			fmt.Fprintf(os.Stdout, "  %02d.% 4dms %s %s %s\n", y, rtt, p.Path, p.IP, hop.Host)
+			fmt.Fprintf(os.Stdout, "  %02d.% 4dms %s %s\n", ttl, rtt, node.RouteLabel, ip)
 		}
 		trace.Hops = append(trace.Hops, hop)
 	}
