@@ -16,8 +16,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/ehmry/go-cjdns/key"
+	"github.com/spf13/cobra"
 )
 
 func showLocalPeers() {
@@ -77,25 +79,26 @@ func peersCmd(cmd *cobra.Command, args []string) {
 		fmt.Fprintf(os.Stderr, "Could not resolve %q.\n", args[0])
 		os.Exit(1)
 	}
+
 	c := Connect()
-	table, err := c.NodeStore_dumpTable()
+
+	node, err := c.NodeStore_nodeForAddr(ip.String())
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to get routing table:", err)
-		os.Exit(1)
-	}
-	peers := table.Peers(ip)
-	if len(peers) == 0 {
-		fmt.Fprintln(os.Stderr, "no peers found in local routing table")
-		os.Exit(1)
-	}
-	peers.SortByQuality()
-
-	for _, p := range peers {
-		host, _, _ := resolve(p.IP.String())
-		//fmt.Printf("\t%-39s %s\n", p.IP, host)
-		fmt.Printf("%-39s %s Link: %s %s\n", p.IP, p.Path, p.Link, host)
+		die(err.Error())
 	}
 
+	peers, _, err := c.RouterModule_getPeers(node.RouteLabel, 0, "")
+	if err != nil {
+		die(err.Error())
+	}
+	for _, s := range peers {
+		k, err := key.DecodePublic(s[24:])
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "received malformed key ", s[24:])
+			continue
+		}
+		fmt.Fprintf(os.Stdout, "%-39s %s \n", k.IP(), s[:3])
+	}
 }
 
 const maxSpread = 32
