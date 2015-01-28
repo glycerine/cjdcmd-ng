@@ -86,7 +86,7 @@ func peersCmd(cmd *cobra.Command, args []string) {
 
 	c := Connect()
 
-	node, err := c.NodeStore_nodeForAddr(ip.String())
+	node, err := c.NodeStore_nodeForAddr(ip)
 	if err != nil {
 		die(err.Error())
 	}
@@ -101,7 +101,7 @@ func peersCmd(cmd *cobra.Command, args []string) {
 			fmt.Fprintln(os.Stderr, "received malformed key ", s[24:])
 			continue
 		}
-		ip = k.IP()
+		ip = k.String()
 		if Verbose {
 			fmt.Fprintln(os.Stdout, s[:3], s[3:24], s[24:], ip)
 		} else {

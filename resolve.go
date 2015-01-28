@@ -29,35 +29,34 @@ var (
 	rMutex = new(sync.RWMutex)
 )
 
-func resolve(host string) (hostname string, ip net.IP, err error) {
+func resolve(host string) (hostname, ip string, err error) {
 	if ipRegex.MatchString(host) {
-		ip = net.ParseIP(host)
-		addr := ip.String()
+		ip = host
 
 		var ok bool
 		rMutex.RLock()
-		hostname, ok = rCache[addr]
+		hostname, ok = rCache[ip]
 		rMutex.RUnlock()
 		if ok {
 			return
 		}
 		rMutex.Lock()
 		defer rMutex.Unlock()
-		hostname, ok = rCache[addr]
+		hostname, ok = rCache[ip]
 		if ok {
 			return
 		}
 
-		if hostnames, err := net.LookupAddr(addr); err == nil {
+		if hostnames, err := net.LookupAddr(ip); err == nil {
 			for _, h := range hostnames {
 				hostname = hostname + h + " "
 			}
 		} else if Verbose {
-			fmt.Fprintf(os.Stderr, "failed to resolve %s, %s\n", addr, err)
+			fmt.Fprintf(os.Stderr, "failed to resolve %s, %s\n", ip, err)
 		}
 
 		if len(hostname) > 0 {
-			rCache[addr] = hostname
+			rCache[ip] = hostname
 		}
 		return
 	} else {
@@ -67,9 +66,9 @@ func resolve(host string) (hostname string, ip net.IP, err error) {
 			return
 		}
 
-		for _, addr := range addrs {
+		for _, addr:= range addrs {
 			if ipRegex.MatchString(addr) {
-				ip = net.ParseIP(addr)
+				ip = addr
 				return
 			}
 		}

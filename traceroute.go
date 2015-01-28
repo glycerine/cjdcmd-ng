@@ -18,7 +18,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"net"
 	"os"
 	"time"
 
@@ -100,8 +99,7 @@ func tracerouteCmd(cmd *cobra.Command, args []string) {
 }
 
 type target struct {
-	addr net.IP
-	name string
+	addr, name string
 	rtt  time.Duration
 	xml  *Host
 }
@@ -110,7 +108,7 @@ func (t *target) String() string {
 	if len(t.name) != 0 {
 		return fmt.Sprintf("%s (%s)", t.name, t.addr)
 	}
-	return t.addr.String()
+	return t.addr
 }
 
 func newTarget(host string) (t *target, err error) {
@@ -124,7 +122,7 @@ var notInTableError = errors.New("not found in routing table")
 func (t *target) trace(c *admin.Conn) (hostTrace *Host, err error) {
 	var node *admin.StoreNode
 	var addr string
-	node, err = c.NodeStore_nodeForAddr(t.addr.String())
+	node, err = c.NodeStore_nodeForAddr(t.addr)
 	if err != nil {
 		return
 	}
@@ -162,7 +160,7 @@ func (t *target) trace(c *admin.Conn) (hostTrace *Host, err error) {
 		hop := &Hop{
 			TTL:    ttl,
 			RTT:    rtt,
-			IPAddr: &ip,
+			IPAddr: ip.String(),
 			//Host:   hostname,
 		}
 
@@ -183,7 +181,7 @@ func (t *target) trace(c *admin.Conn) (hostTrace *Host, err error) {
 			Reason:    "pingNode",
 			ReasonTTL: 56,
 		},
-		Address: &Address{Addr: &t.addr, AddrType: "ipv6"},
+		Address: &Address{Addr: t.addr, AddrType: "ipv6"},
 		Trace:   trace,
 		//Times: &Times{ // Don't know what to do with this element yet.
 		//	SRTT:   1,

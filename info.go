@@ -34,7 +34,7 @@ func infoCmd(cmd *cobra.Command, args []string) {
 			continue
 		}
 
-		node, err := c.NodeStore_nodeForAddr(ip.String())
+		node, err := c.NodeStore_nodeForAddr(ip)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			continue

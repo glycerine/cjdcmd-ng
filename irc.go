@@ -37,12 +37,11 @@ func nickCmd(cmd *cobra.Command, args []string) {
 		cmd.Usage()
 		os.Exit(1)
 	}
-	_, ip, err := resolve(args[0])
+	_, addr, err := resolve(args[0])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Could not resolve "+args[0]+".")
 		os.Exit(1)
 	}
-	addr := ip.String()
 
 	rand.Seed(time.Now().UnixNano())
 

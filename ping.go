@@ -50,15 +50,14 @@ func pingCmd(cmd *cobra.Command, args []string) {
 	}
 
 	host, ip, err := resolve(args[0])
-	addr := ip.String()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not resolve %s: %s\n", args[0], err)
 		os.Exit(1)
 	}
 
-	node, err := c.NodeStore_nodeForAddr(addr)
+	node, err := c.NodeStore_nodeForAddr(ip)
 	if err != nil {
-		die("Failed to find %s, %s", addr, err)
+		die("Failed to find %s, %s", ip, err)
 	}
 	path := node.RouteLabel
 
@@ -119,7 +118,7 @@ func pingCmd(cmd *cobra.Command, args []string) {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, os.Kill)
 
-	fmt.Fprintf(os.Stdout, "PING %s (%s)\n", host, addr)
+	fmt.Fprintf(os.Stdout, "PING %s (%s)\n", host, ip)
 	start = time.Now()
 	go ping()
 	for i := count; i != 0; i-- {
