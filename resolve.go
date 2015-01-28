@@ -21,6 +21,8 @@ import (
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/ehmry/go-cjdns/key"
 )
 
 var (
@@ -30,6 +32,16 @@ var (
 )
 
 func resolve(host string) (hostname, ip string, err error) {
+	if keyRegex.MatchString(host) {
+		k, err := key.DecodePublic(host)
+		// If err != nil, assume host is really a hostname.
+		if err == nil {
+			ip = k.IP().String()
+			host = ip
+
+		}
+	}
+
 	if ipRegex.MatchString(host) {
 		ip = host
 
