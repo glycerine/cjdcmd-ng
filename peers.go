@@ -111,11 +111,10 @@ func peersCmd(cmd *cobra.Command, args []string) {
 			fmt.Fprintln(os.Stderr, "received malformed key ", s[24:])
 			continue
 		}
-		ip = k.String()
 		if Verbose {
-			fmt.Fprintln(os.Stdout, s[:3], s[3:24], s[24:], ip)
+			fmt.Fprintln(os.Stdout, s[:3], s[3:24], s[24:], k.IP())
 		} else {
-			fmt.Fprintln(os.Stdout, ip)
+			fmt.Fprintln(os.Stdout, k.IP())
 		}
 	}
 }
