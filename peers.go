@@ -45,6 +45,17 @@ func showLocalPeers() {
 			host = ip
 		}
 		if Verbose {
+			var inP, outP int64
+			if tIn == 0 {
+				inP = 0
+			} else {
+				inP = (node.BytesIn * 100) / tIn
+			}
+			if tOut == 0 {
+				outP = 0
+			} else {
+				outP = (node.BytesOut * 100) / tOut
+			}
 
 			fmt.Fprintf(os.Stdout, "%s %s\n"+
 				"\tIncoming: %-5t\n"+
@@ -56,8 +67,7 @@ func showLocalPeers() {
 
 				node.PublicKey, host,
 				node.IsIncoming, node.State,
-				node.BytesIn, (node.BytesIn * 100 / tIn),
-				node.BytesOut, (node.BytesOut * 100 / tOut),
+				tIn, inP, tOut, outP,
 				ratio(node.BytesIn, node.BytesOut), node.LostPackets,
 			// time.Duration(node.Last),
 			)
