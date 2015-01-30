@@ -29,9 +29,10 @@ func routeCmd(cmd *cobra.Command, args []string) {
 	}
 	c := Connect()
 
-	var addr string
+	var ip string
+	var err error
 	for _, host := range args {
-		_, ip, err := resolve(host)
+		_, ip, err = resolve(host)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			continue
@@ -39,13 +40,13 @@ func routeCmd(cmd *cobra.Command, args []string) {
 		node, err := c.NodeStore_nodeForAddr(ip)
 
 		for err == nil && node.RouteLabel != "0000.0000.0000.0001" {
-			node, err = c.NodeStore_nodeForAddr(ip)
 			if Verbose {
 				fmt.Fprintf(os.Stdout, "%-39s - %s - v%d - Reach: %10d\n", ip, node.RouteLabel, node.ProtocolVersion, node.Reach)
 			} else {
-				fmt.Fprintln(os.Stdout, addr)
+				fmt.Fprintln(os.Stdout, ip)
 			}
-			addr = node.BestParent.IP
+			node, err = c.NodeStore_nodeForAddr(ip)
+			ip = node.BestParent.IP
 		}
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
