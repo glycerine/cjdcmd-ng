@@ -19,6 +19,7 @@ import (
 	"os"
 
 	"github.com/ehmry/go-cjdns/key"
+	"github.com/inhies/go-bytesize"
 	"github.com/spf13/cobra"
 )
 
@@ -60,21 +61,24 @@ func showLocalPeers() {
 			fmt.Fprintf(os.Stdout, "%s %s\n"+
 				"\tIncoming: %-5t\n"+
 				"\tState: %s \n"+
-				"\tBytes In:  %10d (%d%%)\n"+
-				"\tBytes Out: %10d (%d%%)\n"+
+				"\tBytes In:  %s (%d%%)\n"+
+				"\tBytes Out: %s (%d%%)\n"+
 				"\tTraffic Ratio: %s\n"+
 				"\tLost Packets: %d\n\n",
 				// Last seen: %s\n",
 
 				node.PublicKey, host,
 				node.IsIncoming, node.State,
-				tIn, inP, tOut, outP,
+				bytesize.New(float64(node.BytesIn)), inP, bytesize.New(float64(node.BytesOut)), outP,
 				ratio(node.BytesIn, node.BytesOut), node.LostPackets,
 			// time.Duration(node.Last),
 			)
 		} else {
 			fmt.Fprintln(os.Stdout, ip)
 		}
+	}
+	if Verbose {
+		fmt.Fprintln(os.Stdout, "Total Traffic:", bytesize.New(float64(tIn)), ratio(tIn, tOut), bytesize.New(float64(tOut)))
 	}
 }
 
@@ -139,7 +143,7 @@ func ratio(in, out int64) string {
 	out /= factor
 	in /= factor
 
-	for out%2 == 0 {
+	for out%2 == 0 && in%2 == 0 {
 		out /= 2
 		in /= 2
 	}
