@@ -62,7 +62,8 @@ func showLocalPeers() {
 				"\tState: %s \n"+
 				"\tBytes In:  %10d (%d%%)\n"+
 				"\tBytes Out: %10d (%d%%)\n"+
-				"\tIn/Out: %s  Lost Packets: %d\n\n",
+				"\tTraffic Ratio: %s\n"+
+				"\tLost Packets: %d\n\n",
 				// Last seen: %s\n",
 
 				node.PublicKey, host,
@@ -142,5 +143,5 @@ func ratio(in, out int64) string {
 		out /= 2
 		in /= 2
 	}
-	return fmt.Sprintf("%d/%d", in, out)
+	return fmt.Sprintf("↓%d/%d↑", in, out)
 }
