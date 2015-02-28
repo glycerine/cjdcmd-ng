@@ -33,7 +33,7 @@ var (
 	ipRegex   = regexp.MustCompile("^fc[a-f0-9]{1,2}:([a-f0-9]{0,4}:){2,6}[a-f0-9]{1,4}$")
 	pathRegex = regexp.MustCompile("([0-9a-f]{4}\\.){3}[0-9a-f]{4}")
 	hostRegex = regexp.MustCompile("^([a-zA-Z0-9]([a-zA-Z0-9\\-\\.]{0,}[a-zA-Z0-9]))$")
-	keyRegex = regexp.MustCompile("^[0-9a-z]*\\.k$")
+	keyRegex  = regexp.MustCompile("^[0-9a-z]*\\.k$")
 )
 
 var (
@@ -155,10 +155,17 @@ var (
 			Run: listenCmd,
 		}
 	*/
+
 	InfoCmd = &cobra.Command{
 		Use:   "info HOST [ HOST ... ]",
 		Short: "Show node information",
 		Run:   infoCmd,
+	}
+
+	TrafficCmd = &cobra.Command{
+		Use:   "traffic",
+		Short: "Show traffic statistics",
+		Run:   trafficCmd,
 	}
 )
 
@@ -187,6 +194,7 @@ func init() {
 		ConnectCmd,
 		//ListenCmd,
 		InfoCmd,
+		TrafficCmd,
 	)
 }
 
