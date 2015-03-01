@@ -29,7 +29,18 @@ func trafficCmd(cmd *cobra.Command, args []string) {
 		die("Error getting peers stats,", err)
 	}
 
-	fmt.Fprint(os.Stdout, "Peer:                                     In:       Out:\n")
+	var tIn, tOut float64
+
+	for _, node := range stats {
+		tIn += float64(node.BytesIn)
+		tOut += float64(node.BytesOut)
+	}
+
+	fmt.Fprintf(os.Stdout,
+		"                                         In:               Out:\n"+
+			"                                         %8s          %8s\n\n",
+		bytesize.New(float64(tIn)),
+		bytesize.New(float64(tOut)))
 
 	for _, node := range stats {
 		ip := node.PublicKey.IP().String()
@@ -37,10 +48,13 @@ func trafficCmd(cmd *cobra.Command, args []string) {
 		if host == "" {
 			host = ip
 		}
-		fmt.Fprintf(os.Stdout, "%-39s  %8s  %8s\n",
+		in := float64(node.BytesIn)
+		out := float64(node.BytesOut)
+
+		fmt.Fprintf(os.Stdout, "%-39s  %8s(%5.2f%%)  %8s(%5.2f%%)\n",
 			host,
-			bytesize.New(float64(node.BytesIn)),
-			bytesize.New(float64(node.BytesOut)))
+			bytesize.New(in), (100 * (in / tIn)),
+			bytesize.New(out), (100 * (out / tOut)))
 	}
 
 }
