@@ -21,11 +21,21 @@ import (
 )
 
 func infoCmd(cmd *cobra.Command, args []string) {
-	if len(args) < 1 {
-		cmd.Usage()
-		os.Exit(1)
-	}
 	c := Connect()
+
+	if len(args) == 0 {
+		self, err := c.NodeStore_nodeForAddr("")
+		if err != nil {
+			die(err.Error())
+		}
+
+		fmt.Fprintf(os.Stdout, self.Key +
+			"\n\tProtocol version: %d"+
+			"\n\tLink Count: %d\n",
+			self.ProtocolVersion, self.LinkCount,
+		)
+		return
+	}
 
 	for _, host := range args {
 		_, ip, err := resolve(host)
