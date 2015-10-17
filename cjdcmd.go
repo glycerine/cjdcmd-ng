@@ -195,6 +195,7 @@ func init() {
 		//ListenCmd,
 		InfoCmd,
 		TrafficCmd,
+		FingerprintCmd,
 	)
 }
 

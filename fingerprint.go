@@ -23,9 +23,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var ConvertCmd = &cobra.Command{
-	Use:   "convert",
-	Short: "Convert key forms",
+var FingerprintCmd = &cobra.Command{
+	Use:   "fingerprint",
+	Short: "Show public key unicode fingerprint",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			cmd.Help()
@@ -41,33 +41,17 @@ var ConvertCmd = &cobra.Command{
 		for _, arg := range args {
 			if len(arg) == 64 {
 				private, err = key.DecodePrivate(arg)
-				if err != nil {
-					fmt.Fprintln(os.Stderr, "Failed to decode private key,", err)
+				if err == nil {
+					public = private.Pubkey()
 				}
-				public = private.Pubkey()
-
-			} else if len(arg) == 96 {
-				public = new(key.Public)
-
-				buf, err := base256.Braille.DecodeString(arg)
-				if err != nil {
-					fmt.Fprintln(os.Stderr, "Failed to decode fingerprint,", err)
-					os.Exit(1)
-				}
-
-				copy(public[:], buf);
-
 			} else {
 				public, err = key.DecodePublic(arg)
+			}
 				if err != nil {
-					fmt.Fprintln(os.Stderr, "Failed to decode public key,", err)
+					fmt.Fprintln(os.Stderr, "Failed to decode key,", err)
 					os.Exit(1)
 				}
-				fmt.Fprintln(os.Stdout, public.IP())
-				continue;
-			}
-			fmt.Fprintln(os.Stdout, public.String())
-
+				fmt.Fprintln(os.Stdout, base256.Braille.EncodeToString(public[:]))
 		}
 
 	},
