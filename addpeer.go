@@ -18,7 +18,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	cjdnsConfig "github.com/ehmry/go-cjdns/config"
+	cjdnsConfig "github.com/fc00/go-cjdns/config"
 	"github.com/spf13/cobra"
 	"os"
 	"strings"

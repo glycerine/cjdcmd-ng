@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ehmry/go-cjdns/key"
+	"github.com/fc00/go-cjdns/key"
 	"github.com/inhies/go-bytesize"
 	"github.com/spf13/cobra"
 )

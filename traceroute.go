@@ -21,8 +21,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/ehmry/go-cjdns/admin"
-	"github.com/ehmry/go-cjdns/key"
+	"github.com/fc00/go-cjdns/admin"
+	"github.com/fc00/go-cjdns/key"
 	"github.com/spf13/cobra"
 )
 

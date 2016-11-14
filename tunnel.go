@@ -4,7 +4,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/ehmry/go-cjdns/key"
+	"github.com/fc00/go-cjdns/key"
 	"github.com/spf13/cobra"
 	"net"
 	"os"
