@@ -32,7 +32,7 @@ To install go, check out the [install instructions](http://golang.org/doc/instal
 
 Run the following command to have cjdcmd-ng download, build, and install:
 
-    go get github.com/ehmry/cjdcmd-ng
+    go get github.com/fc00/cjdcmd-ng
 
 
 ## Configuration
