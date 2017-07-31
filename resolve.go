@@ -22,7 +22,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/fc00/go-cjdns/key"
+	"github.com/glycerine/go-cjdns/key"
 )
 
 var (

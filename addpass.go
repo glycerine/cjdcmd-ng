@@ -17,8 +17,8 @@ package main
 import (
 	"bufio"
 	"fmt"
-	cjdnsConfig "github.com/fc00/go-cjdns/config"
-	"github.com/fc00/go-cjdns/key"
+	cjdnsConfig "github.com/glycerine/go-cjdns/config"
+	"github.com/glycerine/go-cjdns/key"
 	"github.com/spf13/cobra"
 	"net"
 	"os"

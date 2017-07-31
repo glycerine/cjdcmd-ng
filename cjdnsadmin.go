@@ -17,8 +17,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/fc00/go-cjdns/admin"
-	cjdnsConfig "github.com/fc00/go-cjdns/config"
+	"github.com/glycerine/go-cjdns/admin"
+	cjdnsConfig "github.com/glycerine/go-cjdns/config"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"

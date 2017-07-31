@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	//"github.com/fc00/go-cjdns/admin"
+	//"github.com/glycerine/go-cjdns/admin"
 	"github.com/spf13/cobra"
 )
 
