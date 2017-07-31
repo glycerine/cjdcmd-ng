@@ -17,6 +17,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/fc00/go-cjdns/key"
 	"github.com/inhies/go-bytesize"
@@ -28,6 +29,14 @@ func showLocalPeers() {
 	stats, err := c.InterfaceController_peerStats()
 	if err != nil {
 		fmt.Println("Error getting local peers,", err)
+	}
+	for _, node := range stats {
+		// remove the 24 byte "v20.0000.0000.0000.0013." prefix
+		// so that the Addr will decode to a public key.
+		node.PublicKey, err = key.DecodePublic(node.Addr[24:])
+		if err != nil {
+			fmt.Println("Error decoding peer Addr,", err)
+		}
 	}
 
 	var tIn, tOut int64
@@ -58,20 +67,21 @@ func showLocalPeers() {
 				outP = (node.BytesOut * 100) / tOut
 			}
 
+			lastTm := time.Unix(node.Last/1000, (node.Last%1000)*1e6)
 			fmt.Fprintf(os.Stdout, "%s %s\n"+
 				"\tIncoming: %-5t\n"+
 				"\tState: %s \n"+
 				"\tBytes In:  %s (%d%%)\n"+
 				"\tBytes Out: %s (%d%%)\n"+
 				"\tTraffic Ratio: %s\n"+
-				"\tLost Packets: %d\n\n",
-				// Last seen: %s\n",
-
+				"\tLost Packets: %d\n"+
+				"\tLast seen: %s (%s ago)\n\n",
 				node.PublicKey, host,
 				node.IsIncoming, node.State,
 				bytesize.New(float64(node.BytesIn)), inP, bytesize.New(float64(node.BytesOut)), outP,
 				ratio(node.BytesIn, node.BytesOut), node.LostPackets,
-			// time.Duration(node.Last),
+				// node.Last is a millisecond precision unix epoch timestamp
+				lastTm, time.Since(lastTm),
 			)
 		} else {
 			fmt.Fprintln(os.Stdout, ip)

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/fc00/go-cjdns/key"
 	"github.com/inhies/go-bytesize"
 	"github.com/spf13/cobra"
 )
@@ -43,6 +44,9 @@ func trafficCmd(cmd *cobra.Command, args []string) {
 		bytesize.New(float64(tOut)))
 
 	for _, node := range stats {
+		// remove the 24 byte "v20.0000.0000.0000.0013." prefix
+		// so that the Addr will decode to a public key.
+		node.PublicKey, _ = key.DecodePublic(node.Addr[24:])
 		ip := node.PublicKey.IP().String()
 		host, _ := resolveIP(ip)
 		if host == "" {
